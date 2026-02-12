@@ -1,7 +1,22 @@
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 const MODEL = "sonar";
-const SYSTEM_PROMPT =
-  "You are a concise Financial Analyst. Give real-time prices and 1-sentence market sentiment.";
+const SYSTEM_PROMPT = `You are a concise Financial Analyst. Rules:
+- Reply in plain text only: no markdown, no asterisks (* or **), no brackets for citations.
+- One or two short sentences. Only the price and one-sentence sentiment.
+- Be factual and accurate. If you cite a number, give the current/latest figure.`;
+
+const MAX_TOKENS = 120;
+
+/** Strip markdown/asterisks so Telegram shows clean text. */
+function cleanForTelegram(text: string): string {
+  return text
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/\[[\d\s,]+\]/g, "")
+    .replace(/\[\^?\d+\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export type PerplexityMessage = { role: "system" | "user" | "assistant"; content: string };
 
@@ -21,8 +36,8 @@ export async function queryPerplexity(
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      max_tokens: 512,
-      temperature: 0.2,
+      max_tokens: MAX_TOKENS,
+      temperature: 0.1,
     }),
   });
 
@@ -45,5 +60,5 @@ export async function queryPerplexity(
     throw new Error("Unexpected Perplexity response shape");
   }
 
-  return content.trim();
+  return cleanForTelegram(content.trim());
 }
