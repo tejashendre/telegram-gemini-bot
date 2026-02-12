@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const bot = createBot();
+    await bot.init();
 
     bot.command("start", (ctx) => {
       return ctx.reply(
@@ -74,7 +75,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    await bot.handleUpdate(body as Parameters<Bot["handleUpdate"]>[0]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await bot.handleUpdate(body as any);
     console.log("[telegram] Handled update_id:", updateId);
     return NextResponse.json({ ok: true });
   } catch (e) {
