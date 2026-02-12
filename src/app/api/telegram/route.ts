@@ -11,9 +11,37 @@ function createBot() {
   return new Bot(token);
 }
 
+/** GET: quick check that this route is deployed and env is set (no secrets shown). */
+export async function GET() {
+  const hasToken = Boolean(process.env.TELEGRAM_BOT_TOKEN);
+  return NextResponse.json({
+    ok: true,
+    route: "telegram webhook",
+    TELEGRAM_BOT_TOKEN_set: hasToken,
+  });
+}
+
 export async function POST(req: NextRequest) {
+  const hasToken = Boolean(process.env.TELEGRAM_BOT_TOKEN);
+  console.log("[telegram] POST received, TELEGRAM_BOT_TOKEN present:", hasToken);
+
+  let body: unknown;
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch (parseErr) {
+    console.error("[telegram] Failed to parse JSON body:", parseErr);
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object" || !("update_id" in body)) {
+    console.error("[telegram] Invalid update body:", typeof body);
+    return NextResponse.json({ ok: false, error: "Invalid update" }, { status: 400 });
+  }
+
+  const updateId = (body as { update_id?: number }).update_id ?? "?";
+  console.log("[telegram] update_id:", updateId);
+
+  try {
     const bot = createBot();
 
     bot.command("start", (ctx) => {
@@ -46,12 +74,16 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    await bot.handleUpdate(body);
+    await bot.handleUpdate(body as Parameters<Bot["handleUpdate"]>[0]);
+    console.log("[telegram] Handled update_id:", updateId);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("Telegram webhook error:", e);
+    const errMsg = e instanceof Error ? e.message : String(e);
+    const errStack = e instanceof Error ? e.stack : undefined;
+    console.error("[telegram] Webhook error:", errMsg);
+    if (errStack) console.error("[telegram] Stack:", errStack);
     return NextResponse.json(
-      { ok: false, error: "Webhook handler failed" },
+      { ok: false, error: "Webhook handler failed", details: errMsg },
       { status: 500 }
     );
   }
