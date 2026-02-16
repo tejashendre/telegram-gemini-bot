@@ -16,6 +16,8 @@ Next.js 14 (App Router) Telegram bot using the Perplexity API (sonar model) for 
 
    - `TELEGRAM_BOT_TOKEN` — from [@BotFather](https://t.me/BotFather)
    - `PERPLEXITY_API_KEY` — from [Perplexity API](https://docs.perplexity.ai/)
+   - `CRON_SECRET` — Random secret token for cron job security (generate with `openssl rand -hex 32`)
+   - `TELEGRAM_CHAT_ID` — Your Telegram chat ID (get from [@userinfobot](https://t.me/userinfobot))
 
 3. **Set Telegram webhook** (after deploying or using a public URL with ngrok for local dev):
 
@@ -55,12 +57,28 @@ Replace `YOUR_USERNAME` and `telegram-perplexity-bot` with your GitHub username 
 ## Deploy on Vercel (Option B)
 
 1. After pushing to GitHub, go to [vercel.com](https://vercel.com) → **New Project** → **Import** your repo.
-2. Add **Environment Variables**: `TELEGRAM_BOT_TOKEN` and `PERPLEXITY_API_KEY` (same values as in `.env.local`).
+2. Add **Environment Variables**:
+   - `TELEGRAM_BOT_TOKEN` — Your bot token
+   - `PERPLEXITY_API_KEY` — Your Perplexity API key
+   - `CRON_SECRET` — Random secret for cron job security
+   - `TELEGRAM_CHAT_ID` — Your Telegram chat ID (get from [@userinfobot](https://t.me/userinfobot))
 3. Deploy. Note your URL (e.g. `https://your-app.vercel.app`).
 4. Set the webhook (in browser or curl):
    ```
    https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook?url=https://YOUR_VERCEL_URL/api/telegram
    ```
+
+## Daily Financial Ratio Report
+
+The bot includes a **Daily Financial Ratio Report** feature that runs automatically via Vercel Cron:
+
+- **Schedule:** Daily at 8:00 AM IST (2:30 AM UTC)
+- **Stocks:** AAPL, MSFT, NVDA (configurable in code)
+- **Metrics:** Current Price, P/E Ratio, ROE, Debt-to-Equity
+- **AI Analysis:** Perplexity provides qualitative insights
+- **Delivery:** Sent directly to your Telegram chat
+
+See [SETUP_CHECKLIST.md](./SETUP_CHECKLIST.md) for detailed setup instructions.
 
 ## Bot name in Telegram
 
