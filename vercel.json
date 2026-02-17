@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "src/app/api/telegram/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/morning-brief/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/morning-brief",
+      "schedule": "30 2 * * *"
+    }
+  ]
+}
