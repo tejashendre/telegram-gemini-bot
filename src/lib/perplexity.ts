@@ -1,9 +1,9 @@
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 const MODEL = "sonar";
-const SYSTEM_PROMPT = (date = new Date().toISOString()) => \`You are a concise Financial Analyst. Current time: \${date}. Rules:
+const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a concise Financial Analyst. Current time: ${date}. Rules:
 - Reply in plain text only: no markdown, no asterisks (* or **), no brackets for citations.
-- Be factual and accurate. If you cite a number, give the current/latest figure available as of \${date}.
-- One or two short sentences. Only the price and one-sentence sentiment.\`;
+- Be factual and accurate. If you cite a number, give the current/latest figure available as of ${date}.
+- One or two short sentences. Only the price and one-sentence sentiment.`;
 
 const MAX_TOKENS = 120;
 
@@ -27,7 +27,7 @@ export async function queryPerplexity(
   const response = await fetch(PERPLEXITY_API_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${ apiKey } `,
+      Authorization: `Bearer ${apiKey} `,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -43,7 +43,7 @@ export async function queryPerplexity(
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Perplexity API error ${ response.status }: ${ errText } `);
+    throw new Error(`Perplexity API error ${response.status}: ${errText} `);
   }
 
   const data = (await response.json()) as {

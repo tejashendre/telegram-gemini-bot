@@ -22,8 +22,8 @@ function ensureLoaded(): Set<string> {
   if (_users !== null) return _users;
   // Combine env var AND default users to ensure everyone is covered
   const rawEnv = process.env[STORAGE_KEY] || "";
-  const combined = \`\${rawEnv},\${DEFAULT_USERS}\`;
-  
+  const combined = `${rawEnv},${DEFAULT_USERS}`;
+
   _users = new Set<string>();
   for (const id of combined.split(",")) {
     const trimmed = id.trim();
@@ -61,15 +61,15 @@ export function addUser(chatId: string): { success: boolean; message: string } {
 
   users.add(chatId);
   console.log(
-    `[user - storage] User ${ chatId } subscribed(now ${ users.size } total). ` +
-    `Ensure ${ STORAGE_KEY } in Vercel includes this ID for persistence across deploys.`
+    `[user - storage] User ${chatId} subscribed(now ${users.size} total). ` +
+    `Ensure ${STORAGE_KEY} in Vercel includes this ID for persistence across deploys.`
   );
 
   return {
     success: true,
     message:
       `✅ You're subscribed! You'll receive daily financial reports at 8 AM IST.\n\n` +
-      `Your Chat ID: ${ chatId } \n` +
+      `Your Chat ID: ${chatId} \n` +
       `Please share this ID with the bot admin so it can be saved permanently.`,
   };
 }
@@ -89,8 +89,8 @@ export function removeUser(chatId: string): { success: boolean; message: string 
 
   users.delete(chatId);
   console.log(
-    `[user - storage] User ${ chatId } unsubscribed(now ${ users.size } total). ` +
-    `Remove from ${ STORAGE_KEY } in Vercel for persistence.`
+    `[user - storage] User ${chatId} unsubscribed(now ${users.size} total). ` +
+    `Remove from ${STORAGE_KEY} in Vercel for persistence.`
   );
 
   return {
