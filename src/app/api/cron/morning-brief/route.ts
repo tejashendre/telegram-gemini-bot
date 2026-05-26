@@ -105,11 +105,6 @@ async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<stri
           },
         ],
       },
-      tools: [
-        {
-          google_search: {},
-        },
-      ],
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 200,

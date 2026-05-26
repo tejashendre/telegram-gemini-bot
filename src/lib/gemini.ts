@@ -48,11 +48,6 @@ export async function queryGemini(
           },
         ],
       },
-      tools: [
-        {
-          google_search: {},
-        },
-      ],
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: MAX_TOKENS,
