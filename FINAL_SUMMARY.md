@@ -22,7 +22,7 @@ Your Telegram Bot with Daily Financial Ratio Report is **100% ready** for GitHub
 - **CRON_SECRET:** `pxmcz9+ra846qWBB4nECN/QWnQPxp1vqwixKIc//dz0=`
 - **TELEGRAM_CHAT_ID:** `6909425236`
 - **TELEGRAM_BOT_TOKEN:** `7768600798:AAH8bAMCG5gUQmYlk0Zx5_wyh4jKf3sGEH0`
-- **PERPLEXITY_API_KEY:** `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`
+- **GEMINI_API_KEY:** `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44`
 
 ---
 
@@ -92,7 +92,7 @@ Go to **Settings** → **Environment Variables** and add:
 | `CRON_SECRET` | `pxmcz9+ra846qWBB4nECN/QWnQPxp1vqwixKIc//dz0=` |
 | `TELEGRAM_CHAT_ID` | `6909425236` |
 | `TELEGRAM_BOT_TOKEN` | `7768600798:AAH8bAMCG5gUQmYlk0Zx5_wyh4jKf3sGEH0` |
-| `PERPLEXITY_API_KEY` | `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` |
+| `GEMINI_API_KEY` | `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44` |
 
 **Important:** Check all environments (Production, Preview, Development) for each variable.
 
@@ -115,7 +115,7 @@ Once deployed and configured:
 1. **Daily at 8:00 AM IST:** Cron job automatically triggers
 2. **Fetches:** Financial data for AAPL, MSFT, NVDA from Yahoo Finance
 3. **Calculates:** Current Price, P/E Ratio, ROE, Debt-to-Equity
-4. **Analyzes:** Gets AI summary from Perplexity
+4. **Analyzes:** Gets AI summary from Gemini
 5. **Sends:** Formatted report to your Telegram chat (ID: 6909425236)
 
 ---
@@ -125,7 +125,7 @@ Once deployed and configured:
 ### Code Files:
 - ✅ `src/app/api/cron/morning-brief/route.ts` - Main cron job
 - ✅ `src/app/api/telegram/route.ts` - Telegram webhook (existing)
-- ✅ `src/lib/perplexity.ts` - Perplexity integration (existing)
+- ✅ `src/lib/gemini.ts` - Gemini integration (NEW)
 - ✅ `vercel.json` - Cron configuration
 - ✅ `package.json` - Dependencies
 

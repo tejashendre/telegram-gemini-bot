@@ -86,37 +86,27 @@
 
 ---
 
-## 4. 🧠 PERPLEXITY_API_KEY (Perplexity API Key)
+## 4. 🧠 GEMINI_API_KEY (Gemini API Key)
 
 **Step 1:** Open your web browser
 
-**Step 2:** Go to: https://www.perplexity.ai/
+**Step 2:** Go to: https://aistudio.google.com/
 
-**Step 3:** Click **"Sign In"** (top right) or create an account if you don't have one
+**Step 3:** Sign in with your Google account
 
-**Step 4:** After signing in, go to: https://www.perplexity.ai/settings/api
+**Step 4:** Click the **"Get API key"** button (usually in the top-left sidebar)
 
-   **OR** manually navigate:
-   - Click your profile icon (top right)
-   - Click **"Settings"**
-   - Click **"API"** in the left sidebar
+**Step 5:** Click **"Create API Key"**
 
-**Step 5:** Look for **"API Keys"** section
+**Step 6:** Select a Google Cloud project (or let it auto-create a new one) and click **"Create API key in existing project"**
 
-**Step 6:** If you see an existing key, click **"Show"** or **"Copy"** to reveal it
+**Step 7:** **Copy the API key** immediately (it looks like: `AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`)
 
-**Step 7:** If you DON'T have a key yet:
-   - Click **"Create API Key"** or **"Generate New Key"**
-   - Give it a name (e.g., "Telegram Bot")
-   - Click **"Create"** or **"Generate"**
+**Step 8:** Save it somewhere safe
 
-**Step 8:** **Copy the API key** immediately (it looks like: `pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`)
+**⚠️ Important:** Treat your API key like a password. Never share it or upload it to GitHub in public repositories.
 
-**Step 9:** Save it somewhere safe
-
-**⚠️ Important:** You can only see the full key ONCE when it's created. If you lose it, you'll need to create a new one.
-
-**✅ Done!** You now have your PERPLEXITY_API_KEY.
+**✅ Done!** You now have your GEMINI_API_KEY.
 
 ---
 
@@ -127,7 +117,7 @@ After following all steps above, you should have:
 - [ ] **CRON_SECRET** - Random string from randomkeygen.com
 - [ ] **TELEGRAM_CHAT_ID** - Number from @userinfobot
 - [ ] **TELEGRAM_BOT_TOKEN** - Token from @BotFather
-- [ ] **PERPLEXITY_API_KEY** - Key from perplexity.ai/settings/api
+- [ ] **GEMINI_API_KEY** - Key from aistudio.google.com
 
 ---
 

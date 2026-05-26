@@ -1,5 +1,5 @@
-const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
-const MODEL = "sonar";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+
 const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a concise Financial Analyst. Current time: ${date}. Rules:
 - Reply in plain text only: no markdown, no asterisks (* or **), no brackets for citations.
 - Be factual and accurate. If you cite a number, give the current/latest figure available as of ${date}.
@@ -18,36 +18,60 @@ function cleanForTelegram(text: string): string {
     .trim();
 }
 
-export type PerplexityMessage = { role: "system" | "user" | "assistant"; content: string };
+export type GeminiMessage = { role: "system" | "user" | "model"; content: string };
 
-export async function queryPerplexity(
+export async function queryGemini(
   userMessage: string,
   apiKey: string
 ): Promise<string> {
-  const response = await fetch(PERPLEXITY_API_URL, {
+  const url = `${GEMINI_API_URL}?key=${apiKey}`;
+  const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey} `,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT() },
-        { role: "user", content: userMessage },
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: userMessage,
+            },
+          ],
+        },
       ],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.1,
+      systemInstruction: {
+        parts: [
+          {
+            text: SYSTEM_PROMPT(),
+          },
+        ],
+      },
+      tools: [
+        {
+          google_search: {},
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: MAX_TOKENS,
+      },
     }),
   });
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Perplexity API error ${response.status}: ${errText} `);
+    throw new Error(`Gemini API error ${response.status}: ${errText}`);
   }
 
   const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+      finishReason?: string;
+    }>;
     error?: { message?: string };
   };
 
@@ -55,9 +79,9 @@ export async function queryPerplexity(
     throw new Error(data.error.message);
   }
 
-  const content = data.choices?.[0]?.message?.content;
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (typeof content !== "string") {
-    throw new Error("Unexpected Perplexity response shape");
+    throw new Error("Unexpected Gemini response shape");
   }
 
   return cleanForTelegram(content.trim());

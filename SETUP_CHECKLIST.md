@@ -37,9 +37,9 @@ You need **4 environment variables** in your Vercel project:
 - **Status:** ✅ You already have this
 - **Verify:** Check if it's in Vercel environment variables
 
-#### d) **PERPLEXITY_API_KEY** (Already have)
-- **What:** Your Perplexity API key
-- **Status:** ✅ You already have this
+#### d) **GEMINI_API_KEY** (NEW)
+- **What:** Your Gemini API key from Google AI Studio
+- **Status:** Add this key
 - **Verify:** Check if it's in Vercel environment variables
 
 ---
@@ -72,7 +72,7 @@ Use one of these methods:
    - `CRON_SECRET` = (your generated secret)
    - `TELEGRAM_CHAT_ID` = (your chat ID from Step 2)
    - Verify `TELEGRAM_BOT_TOKEN` exists
-   - Verify `PERPLEXITY_API_KEY` exists
+   - Add `GEMINI_API_KEY` with your key
 
 ### Step 5: Test the Cron Job (Optional)
 After deploying, test manually:
@@ -104,7 +104,7 @@ git commit -m "Add daily financial ratio report cron job"
 
 4. **Create repository on GitHub**:
    - Go to https://github.com/new
-   - Name it (e.g., `telegram-perplexity-bot`)
+   - Name it (e.g., `telegram-gemini-bot`)
    - **Don't** initialize with README or .gitignore
    - Click "Create repository"
 
@@ -144,7 +144,7 @@ Before considering setup complete, verify:
 - [ ] `CRON_SECRET` added to Vercel environment variables
 - [ ] `TELEGRAM_CHAT_ID` added to Vercel environment variables
 - [ ] `TELEGRAM_BOT_TOKEN` exists in Vercel environment variables
-- [ ] `PERPLEXITY_API_KEY` exists in Vercel environment variables
+- [ ] `GEMINI_API_KEY` exists in Vercel environment variables
 - [ ] Code pushed to GitHub
 - [ ] Vercel deployment successful
 - [ ] Cron job scheduled: `30 2 * * *` (8 AM IST)

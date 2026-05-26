@@ -26,7 +26,7 @@ You have all the values ready:
 - ✅ CRON_SECRET: `pxmcz9+ra846qWBB4nECN/QWnQPxp1vqwixKIc//dz0=`
 - ✅ TELEGRAM_CHAT_ID: `6909425236`
 - ✅ TELEGRAM_BOT_TOKEN: `7768600798:AAH8bAMCG5gUQmYlk0Zx5_wyh4jKf3sGEH0`
-- ✅ PERPLEXITY_API_KEY: `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`
+- ✅ GEMINI_API_KEY: `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44`
 
 **⚠️ Important:** Add these to Vercel AFTER deploying, NOT in the code!
 
@@ -59,8 +59,8 @@ git commit -m "Add daily financial ratio report cron job feature"
 
 **Step 5:** Create repository on GitHub
 1. Go to: https://github.com/new
-2. Repository name: `telegram-perplexity-bot` (or your preferred name)
-3. Description: "Telegram bot with Perplexity API and daily financial reports"
+2. Repository name: `telegram-gemini-bot` (or your preferred name)
+3. Description: "Telegram bot with Gemini API and daily financial reports"
 4. Choose: **Public** or **Private**
 5. **DO NOT** check "Add a README file" (you already have one)
 6. **DO NOT** check "Add .gitignore" (you already have one)
@@ -133,8 +133,8 @@ After uploading to GitHub:
    - Click **"Save"**
 
    **Variable 4:**
-   - Key: `PERPLEXITY_API_KEY`
-   - Value: `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`
+   - Key: `GEMINI_API_KEY`
+   - Value: `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44`
    - Environments: Production, Preview, Development (check all)
    - Click **"Save"**
 
@@ -179,7 +179,7 @@ After everything is set up:
 - **Daily at 8:00 AM IST:** You'll receive a Telegram message with:
   - Financial ratios for AAPL, MSFT, NVDA
   - Current Price, P/E Ratio, ROE, Debt-to-Equity
-  - AI analysis from Perplexity
+  - AI analysis from Gemini
 
 ---
 

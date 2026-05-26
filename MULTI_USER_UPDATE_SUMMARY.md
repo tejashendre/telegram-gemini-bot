@@ -40,7 +40,7 @@ Your bot now sends daily financial reports to **all users who interact with it**
 
 ### ✅ KEPT (Same as before):
 - `TELEGRAM_BOT_TOKEN`
-- `PERPLEXITY_API_KEY`
+- `GEMINI_API_KEY`
 - `CRON_SECRET`
 
 ---
@@ -60,7 +60,7 @@ Your bot now sends daily financial reports to **all users who interact with it**
 
 4. **Keep** (verify they exist):
    - `TELEGRAM_BOT_TOKEN` = `7768600798:AAH8bAMCG5gUQmYlk0Zx5_wyh4jKf3sGEH0`
-   - `PERPLEXITY_API_KEY` = `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`
+   - `GEMINI_API_KEY` = `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44`
    - `CRON_SECRET` = `pxmcz9+ra846qWBB4nECN/QWnQPxp1vqwixKIc//dz0=`
 
 5. **Redeploy** your project

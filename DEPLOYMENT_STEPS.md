@@ -35,7 +35,7 @@ Make sure these files exist:
 - ✅ `src/app/api/test-morning-brief/route.ts`
 - ✅ `src/app/api/telegram/route.ts`
 - ✅ `src/lib/user-storage.ts`
-- ✅ `src/lib/perplexity.ts`
+- ✅ `src/lib/gemini.ts`
 - ✅ `vercel.json`
 - ✅ `package.json` (with `yahoo-finance2` dependency)
 - ✅ `.gitignore` (excludes `.env.local`)
@@ -74,8 +74,8 @@ git commit -m "Add daily financial ratio report with real-time market data"
 ### 2.5 Create GitHub Repository
 
 1. Go to: https://github.com/new
-2. Repository name: `telegram-perplexity-bot` (or your preferred name)
-3. Description: "Telegram bot with Perplexity API and daily financial reports"
+2. Repository name: `telegram-gemini-bot` (or your preferred name)
+3. Description: "Telegram bot with Gemini API and daily financial reports"
 4. Choose: **Public** or **Private**
 5. **DO NOT** check:
    - ❌ "Add a README file"
@@ -97,7 +97,7 @@ git push -u origin main
 
 **Example:**
 ```bash
-git remote add origin https://github.com/tejashendre/telegram-perplexity-bot.git
+git remote add origin https://github.com/tejashendre/telegram-gemini-bot.git
 git branch -M main
 git push -u origin main
 ```
@@ -120,7 +120,7 @@ Go to your GitHub repository and verify all files are there:
 1. Go to: https://vercel.com
 2. Click **"New Project"** (or **"Add New..."** → **"Project"**)
 3. Click **"Import Git Repository"**
-4. Find and select your repository (`telegram-perplexity-bot`)
+4. Find and select your repository (`telegram-gemini-bot`)
 5. Click **"Import"**
 
 ### 3.2 Configure Project
@@ -150,9 +150,9 @@ Add these **4 variables** one by one:
 - **Environments:** ✅ Production ✅ Preview ✅ Development (check all three)
 - Click **"Add"**
 
-#### Variable 2: PERPLEXITY_API_KEY
-- **Key:** `PERPLEXITY_API_KEY`
-- **Value:** `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`
+#### Variable 2: GEMINI_API_KEY
+- **Key:** `GEMINI_API_KEY`
+- **Value:** `AIzaSyDL2ksHSxxwctm2K9HAsID_5S5mblATj44`
 - **Environments:** ✅ Production ✅ Preview ✅ Development (check all three)
 - Click **"Add"**
 
@@ -172,7 +172,7 @@ Add these **4 variables** one by one:
 
 You should see 4 environment variables listed:
 - ✅ `TELEGRAM_BOT_TOKEN`
-- ✅ `PERPLEXITY_API_KEY`
+- ✅ `GEMINI_API_KEY`
 - ✅ `CRON_SECRET`
 - ✅ `TELEGRAM_SUBSCRIBED_USERS`
 

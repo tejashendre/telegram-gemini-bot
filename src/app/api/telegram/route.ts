@@ -1,6 +1,6 @@
 import { Bot } from "grammy";
 import { NextRequest, NextResponse } from "next/server";
-import { queryPerplexity } from "@/lib/perplexity";
+import { queryGemini } from "@/lib/gemini";
 import {
   addUser,
   removeUser,
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
         console.log(`[telegram] Auto-subscribed ${chatId}`);
       }
 
-      const apiKey = process.env.PERPLEXITY_API_KEY;
+      const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         return ctx.reply("Server misconfiguration. Please try again later.");
       }
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       const sent = await ctx.reply("Scanning market data...");
 
       try {
-        const result = await queryPerplexity(text, apiKey);
+        const result = await queryGemini(text, apiKey);
         await ctx.api.editMessageText(ctx.chat.id, sent.message_id, result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Request failed.";

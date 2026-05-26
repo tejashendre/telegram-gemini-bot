@@ -78,36 +78,59 @@ async function fetchLiveQuote(symbol: string): Promise<MarketData> {
 }
 
 /**
- * Query Perplexity API for AI analysis
+ * Query Gemini API for AI analysis
  */
-async function queryPerplexityRealTime(prompt: string, apiKey: string): Promise<string> {
-  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "sonar",
-      messages: [
+      contents: [
         {
-          role: "system",
-          content: `You are a Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide concise analysis in 2 sentences. Flag any risks. Use plain text only, no markdown.`,
+          role: "user",
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
         },
-        { role: "user", content: prompt },
       ],
-      max_tokens: 200,
-      temperature: 0.1,
+      systemInstruction: {
+        parts: [
+          {
+            text: `You are a Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide concise analysis in 2 sentences. Flag any risks. Use plain text only, no markdown.`,
+          },
+        ],
+      },
+      tools: [
+        {
+          google_search: {},
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 200,
+      },
     }),
   });
 
-  if (!res.ok) throw new Error(`Perplexity API error ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${errText}`);
+  }
 
   const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
   };
 
-  const content = data.choices?.[0]?.message?.content ?? "";
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
   return content.replace(/\*\*/g, "").replace(/\*/g, "").replace(/\[[\d\s,]+\]/g, "").replace(/\[\^?\d+\]/g, "").replace(/\s+/g, " ").trim();
 }
 
@@ -153,10 +176,10 @@ export async function GET(req: NextRequest) {
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const apiKey = process.env.PERPLEXITY_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!botToken || !apiKey) {
-    return NextResponse.json({ ok: false, error: "Missing TELEGRAM_BOT_TOKEN or PERPLEXITY_API_KEY" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Missing TELEGRAM_BOT_TOKEN or GEMINI_API_KEY" }, { status: 500 });
   }
 
   const users = getSubscribedUsers();
@@ -188,7 +211,7 @@ export async function GET(req: NextRequest) {
     let aiSummary: string;
     try {
       const dataSummary = `S&P 500: $${sp500.price.toFixed(2)}; Gold: $${gold.price.toFixed(2)}/oz; Nifty 50: ${nifty.price?.toFixed(2) ?? "N/A"}; S&P/Gold: ${sp500GoldRatio.toFixed(4)}`;
-      aiSummary = await queryPerplexityRealTime(`Market data: ${dataSummary}. Analyze P/E ratios and earnings. What is the story? Flag risks.`, apiKey);
+      aiSummary = await queryGeminiRealTime(`Market data: ${dataSummary}. Analyze P/E ratios and earnings. What is the story? Flag risks.`, apiKey);
     } catch {
       aiSummary = "AI analysis temporarily unavailable.";
     }

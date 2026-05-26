@@ -45,7 +45,7 @@ I've created a **test endpoint** that bypasses the CRON_SECRET requirement for e
 **What happens:**
 - ✅ Fetches real-time market data (S&P 500, Gold, Nifty 50)
 - ✅ Calculates ratios
-- ✅ Gets AI analysis from Perplexity
+- ✅ Gets AI analysis from Gemini
 - ✅ Sends report to all subscribed users on Telegram
 - ✅ Returns JSON response with execution details
 
@@ -156,8 +156,8 @@ Check Vercel Dashboard → Your Project → Logs:
    - Verify symbol names are correct
    - Market might be closed (will show "Closing Price")
 
-2. **Perplexity errors:**
-   - Verify `PERPLEXITY_API_KEY` is correct
+2. **Gemini errors:**
+   - Verify `GEMINI_API_KEY` is correct
    - Check API quota/limits
    - Error will show "AI analysis temporarily unavailable"
 
@@ -176,7 +176,7 @@ Check Vercel Dashboard → Your Project → Logs:
 ## 📊 Expected Execution Times
 
 - **Yahoo Finance fetch:** ~500-1500ms per symbol
-- **Perplexity API:** ~2000-5000ms
+- **Gemini API:** ~1500-3000ms
 - **Telegram send:** ~200-500ms per user
 - **Total execution:** ~3000-8000ms (3-8 seconds)
 
