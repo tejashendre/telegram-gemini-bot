@@ -13,6 +13,9 @@ const SYMBOLS = {
   SP500: "^GSPC",
   GOLD: "GC=F",
   NIFTY: "^NSEI",
+  BTC: "BTC-USD",
+  ETH: "ETH-USD",
+  USDINR: "INR=X",
 };
 
 interface MarketData {
@@ -22,6 +25,26 @@ interface MarketData {
   marketTime: number | null;
   isLive: boolean;
   status: "LIVE" | "Closing Price";
+  sparkline: string;
+}
+
+/**
+ * Generate a text-based sparkline trend chart from a list of prices
+ */
+function generateSparkline(prices: number[]): string {
+  if (prices.length === 0) return "";
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min;
+  const sparkTicks = [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
+  
+  return prices
+    .map((price) => {
+      if (range === 0) return sparkTicks[4];
+      const index = Math.floor(((price - min) / range) * (sparkTicks.length - 1));
+      return sparkTicks[Math.max(0, Math.min(sparkTicks.length - 1, index))];
+    })
+    .join("");
 }
 
 /**
@@ -32,7 +55,8 @@ async function fetchLiveQuote(symbol: string): Promise<MarketData> {
   console.log(`[yahoo] Fetching ${symbol}`);
 
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    // Fetch last 7 days of daily prices to generate sparkline
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=7d`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0",
@@ -51,14 +75,31 @@ async function fetchLiveQuote(symbol: string): Promise<MarketData> {
             shortName?: string;
             symbol?: string;
           };
+          indicators?: {
+            quote?: Array<{
+              close?: Array<number | null>;
+            }>;
+          };
         }>;
       };
     };
 
-    const meta = json.chart?.result?.[0]?.meta;
+    const chartResult = json.chart?.result?.[0];
+    const meta = chartResult?.meta;
     const price = meta?.regularMarketPrice ?? null;
     const marketTime = meta?.regularMarketTime ?? null;
     const name = meta?.shortName || symbol;
+
+    // Extract historical close prices for sparkline
+    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
+    const validPrices = rawCloses.filter((p): p is number => typeof p === "number" && p !== null);
+    
+    // Add current live price to the end if it's not already there
+    if (price !== null && (validPrices.length === 0 || validPrices[validPrices.length - 1] !== price)) {
+      validPrices.push(price);
+    }
+    
+    const sparkline = generateSparkline(validPrices.slice(-7)); // Last 7 data points
 
     // Check if data is live (within 15 minutes)
     let isLive = false;
@@ -70,15 +111,49 @@ async function fetchLiveQuote(symbol: string): Promise<MarketData> {
     }
 
     console.log(`[yahoo] ${symbol} = ${price} (${Date.now() - fetchStart}ms)`);
-    return { symbol, name, price, marketTime, isLive, status };
+    return { symbol, name, price, marketTime, isLive, status, sparkline };
   } catch (error) {
     console.error(`[yahoo] Error ${symbol}:`, error);
-    return { symbol, name: symbol, price: null, marketTime: null, isLive: false, status: "Closing Price" };
+    return { symbol, name: symbol, price: null, marketTime: null, isLive: false, status: "Closing Price", sparkline: "" };
   }
 }
 
+function convertGoldToINRPerGram(goldPriceUSD: number): number {
+  return (goldPriceUSD / 31.1035) * 83;
+}
+
+function formatMarketData(data: MarketData): string {
+  let priceStr = "N/A";
+  
+  if (data.price !== null) {
+    if (data.symbol === SYMBOLS.GOLD) {
+      priceStr = `$${data.price.toFixed(2)}/oz (≈₹${convertGoldToINRPerGram(data.price).toFixed(2)}/gram)`;
+    } else if (data.symbol === SYMBOLS.USDINR) {
+      priceStr = `₹${data.price.toFixed(2)}`;
+    } else if (data.symbol === SYMBOLS.BTC || data.symbol === SYMBOLS.ETH) {
+      priceStr = `$${data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    } else {
+      priceStr = `$${data.price.toFixed(2)}`;
+    }
+  }
+
+  const timeStr =
+    data.marketTime !== null
+      ? new Date(data.marketTime * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false })
+      : "N/A";
+
+  const trendStr = data.sparkline ? `  \`[ ${data.sparkline} ]\`` : "";
+
+  return `*${data.name}* (${data.symbol})\nPrice: ${priceStr}${trendStr}\nStatus: ${data.status === "LIVE" ? "🟢 LIVE" : "🔴 Closing Price"}\nTime: ${timeStr}`;
+}
+
+async function sendTelegramMessage(chatId: string, message: string, botToken: string): Promise<void> {
+  const bot = new Bot(botToken);
+  await bot.api.sendMessage(chatId, message, { parse_mode: "Markdown" });
+}
+
 /**
- * Query Gemini API for AI analysis
+ * Query Gemini API for AI analysis (Option B - Free Tier)
  */
 async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
@@ -129,31 +204,6 @@ async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<stri
   return content.replace(/\*\*/g, "").replace(/\*/g, "").replace(/\[[\d\s,]+\]/g, "").replace(/\[\^?\d+\]/g, "").replace(/\s+/g, " ").trim();
 }
 
-function convertGoldToINRPerGram(goldPriceUSD: number): number {
-  return (goldPriceUSD / 31.1035) * 83;
-}
-
-function formatMarketData(data: MarketData): string {
-  const priceStr =
-    data.price !== null
-      ? data.symbol === SYMBOLS.GOLD
-        ? `$${data.price.toFixed(2)}/oz (≈₹${convertGoldToINRPerGram(data.price).toFixed(2)}/gram)`
-        : `$${data.price.toFixed(2)}`
-      : "N/A";
-
-  const timeStr =
-    data.marketTime !== null
-      ? new Date(data.marketTime * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false })
-      : "N/A";
-
-  return `*${data.name}* (${data.symbol})\nPrice: ${priceStr}\nStatus: ${data.status === "LIVE" ? "🟢 LIVE" : "🔴 Closing Price"}\nTime: ${timeStr}`;
-}
-
-async function sendTelegramMessage(chatId: string, message: string, botToken: string): Promise<void> {
-  const bot = new Bot(botToken);
-  await bot.api.sendMessage(chatId, message, { parse_mode: "Markdown" });
-}
-
 export async function GET(req: NextRequest) {
   const executionStart = Date.now();
   console.log(`[morning-brief] Started at ${new Date().toISOString()}`);
@@ -186,10 +236,14 @@ export async function GET(req: NextRequest) {
   console.log(`[morning-brief] Sending to ${users.length} user(s)`);
 
   try {
-    const [sp500, gold, nifty] = await Promise.all([
+    // Fetch all symbols including Crypto and Forex in parallel
+    const [sp500, gold, nifty, btc, eth, usdinr] = await Promise.all([
       fetchLiveQuote(SYMBOLS.SP500),
       fetchLiveQuote(SYMBOLS.GOLD),
       fetchLiveQuote(SYMBOLS.NIFTY),
+      fetchLiveQuote(SYMBOLS.BTC),
+      fetchLiveQuote(SYMBOLS.ETH),
+      fetchLiveQuote(SYMBOLS.USDINR),
     ]);
 
     if (sp500.price === null || gold.price === null) {
@@ -200,19 +254,30 @@ export async function GET(req: NextRequest) {
     const goldINR = convertGoldToINRPerGram(gold.price);
     const niftyGoldRatio = nifty.price !== null ? nifty.price / goldINR : null;
 
-    const marketSections = [formatMarketData(sp500), formatMarketData(gold), formatMarketData(nifty)].join("\n\n");
+    const marketSections = [
+      formatMarketData(sp500),
+      formatMarketData(gold),
+      formatMarketData(nifty),
+    ].join("\n\n");
+
+    const cryptoForexSections = [
+      formatMarketData(btc),
+      formatMarketData(eth),
+      formatMarketData(usdinr),
+    ].join("\n\n");
+
     const ratios = `*Key Ratios:*\nS&P 500 / Gold: ${sp500GoldRatio.toFixed(4)}\nNifty 50 / Gold (INR/gram): ${niftyGoldRatio?.toFixed(4) ?? "N/A"}`;
 
     let aiSummary: string;
     try {
-      const dataSummary = `S&P 500: $${sp500.price.toFixed(2)}; Gold: $${gold.price.toFixed(2)}/oz; Nifty 50: ${nifty.price?.toFixed(2) ?? "N/A"}; S&P/Gold: ${sp500GoldRatio.toFixed(4)}`;
-      aiSummary = await queryGeminiRealTime(`Market data: ${dataSummary}. Analyze P/E ratios and earnings. What is the story? Flag risks.`, apiKey);
+      const dataSummary = `S&P 500: $${sp500.price.toFixed(2)}; Gold: $${gold.price.toFixed(2)}/oz; Nifty 50: ${nifty.price?.toFixed(2) ?? "N/A"}; BTC: $${btc.price?.toFixed(2) ?? "N/A"}; ETH: $${eth.price?.toFixed(2) ?? "N/A"}; USD/INR: ₹${usdinr.price?.toFixed(2) ?? "N/A"}`;
+      aiSummary = await queryGeminiRealTime(`Market data: ${dataSummary}. Analyze trends, ratios, crypto, and exchange rates. Provide a concise sentiment summary. Flag risks.`, apiKey);
     } catch {
       aiSummary = "AI analysis temporarily unavailable.";
     }
 
     const totalTime = Date.now() - executionStart;
-    const message = `📊 *Real-Time Financial Report*\n\n${marketSections}\n\n---\n${ratios}\n\n---\n*AI Analysis:*\n${aiSummary}\n\n---\n⏱ *Latency:* ${totalTime} ms`;
+    const message = `📊 *Real-Time Financial Report*\n\n${marketSections}\n\n---\n🌐 *Crypto & Forex:*\n\n${cryptoForexSections}\n\n---\n${ratios}\n\n---\n*AI Analysis (Gemini):*\n${aiSummary}\n\n---\n⏱ *Latency:* ${totalTime} ms`;
 
     const results = await Promise.all(
       users.map(async (chatId) => {
