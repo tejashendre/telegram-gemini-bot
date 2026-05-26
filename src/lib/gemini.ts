@@ -7,6 +7,21 @@ const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a concise Fi
 
 const MAX_TOKENS = 120;
 
+// Common natural words mapped to their Yahoo Finance tickers
+const TICKER_MAPPINGS: Record<string, string> = {
+  "BITCOIN": "BTC-USD",
+  "BTC": "BTC-USD",
+  "ETHEREUM": "ETH-USD",
+  "ETH": "ETH-USD",
+  "SOLANA": "SOL-USD",
+  "SOL": "SOL-USD",
+  "GOLD": "GC=F",
+  "NIFTY": "^NSEI",
+  "NIFTY50": "^NSEI",
+  "SP500": "^GSPC",
+  "S&P500": "^GSPC",
+};
+
 /** Strip markdown/asterisks so Telegram shows clean text. */
 function cleanForTelegram(text: string): string {
   return text
@@ -18,12 +33,79 @@ function cleanForTelegram(text: string): string {
     .trim();
 }
 
+/**
+ * Extract a potential ticker or natural asset word from user query
+ */
+function extractTicker(text: string): string | null {
+  const cleanText = text.toUpperCase().replace(/[^A-Z0-9^=\-]/g, " ").trim();
+  const words = cleanText.split(/\s+/);
+  
+  // Check direct mappings first (Bitcoin, Gold, Nifty)
+  for (const word of words) {
+    if (TICKER_MAPPINGS[word]) {
+      return TICKER_MAPPINGS[word];
+    }
+  }
+  
+  // Check for standard stock tickers (uppercase alphabetic of length 2-5)
+  for (const word of words) {
+    if (word.length >= 2 && word.length <= 5 && /^[A-Z]+$/.test(word)) {
+      return word;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Fetch real-time price from Yahoo Finance public API for free grounding
+ */
+async function fetchLiveQuote(symbol: string): Promise<{ price: number; name: string } | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as {
+      chart?: {
+        result?: Array<{
+          meta?: {
+            regularMarketPrice?: number;
+            shortName?: string;
+          };
+        }>;
+      };
+    };
+    const meta = json.chart?.result?.[0]?.meta;
+    const price = meta?.regularMarketPrice ?? null;
+    const name = meta?.shortName || symbol;
+    
+    if (price === null) return null;
+    return { price, name };
+  } catch {
+    return null;
+  }
+}
+
 export type GeminiMessage = { role: "system" | "user" | "model"; content: string };
 
 export async function queryGemini(
   userMessage: string,
   apiKey: string
 ): Promise<string> {
+  // Extract a ticker and fetch live data as context
+  const ticker = extractTicker(userMessage);
+  let liveDataPrompt = "";
+  if (ticker) {
+    const quote = await fetchLiveQuote(ticker);
+    if (quote) {
+      liveDataPrompt = `\n\n[Real-time Live Market Data Context]:\n- Asset: ${quote.name} (${ticker})\n- Live Price: $${quote.price} (INR/gram if Gold)\nUse this live price data as the absolute truth to answer the user's question concisely!`;
+    }
+  }
+
   const url = `${GEMINI_API_URL}?key=${apiKey}`;
   const response = await fetch(url, {
     method: "POST",
@@ -36,7 +118,7 @@ export async function queryGemini(
           role: "user",
           parts: [
             {
-              text: userMessage,
+              text: userMessage + liveDataPrompt,
             },
           ],
         },
