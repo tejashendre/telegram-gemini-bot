@@ -1,4 +1,4 @@
-import { Bot, Keyboard } from "grammy";
+import { Bot } from "grammy";
 import { NextRequest, NextResponse } from "next/server";
 import { queryGemini } from "@/lib/gemini";
 import {
@@ -16,13 +16,6 @@ function createBot() {
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not set");
   return new Bot(token);
 }
-
-// ── CUSTOM INTERACTIVE KEYBOARD ──────────────────────────────────────
-const mainMenuKeyboard = new Keyboard()
-  .text("📈 Daily Brief").text("📊 My Status")
-  .row()
-  .text("🔔 Subscribe").text("🔕 Unsubscribe")
-  .resized();
 
 /** GET: quick check that this route is deployed and env is set (no secrets shown). */
 export async function GET() {
@@ -64,31 +57,29 @@ export async function POST(req: NextRequest) {
       console.log(`[telegram] /start from ${chatId}`);
       const subscribeResult = addUser(chatId);
       await ctx.reply(
-        `👋 Welcome to Telegram Gemini Bot! Send me a ticker or question (e.g. AAPL, Bitcoin price) for real-time prices and market sentiment.\n\n${subscribeResult.message}\n\nUse the quick-action menu buttons below to interact!`,
+        `👋 Welcome to Telegram Gemini Bot! Send me a ticker or question (e.g. AAPL, Bitcoin price) for real-time prices and market sentiment.\n\n${subscribeResult.message}\n\nCommands:\n/subscribe - receive daily reports\n/unsubscribe - stop daily reports\n/status - check your subscription`,
         {
-          reply_markup: mainMenuKeyboard,
+          reply_markup: { remove_keyboard: true }, // Instantly removes the custom reply keyboard from user's screen
         }
       );
-    });
-
-    bot.command("menu", async (ctx) => {
-      await ctx.reply("📱 Main Menu - Click a button below:", {
-        reply_markup: mainMenuKeyboard,
-      });
     });
 
     bot.command("subscribe", async (ctx) => {
       const chatId = String(ctx.chat.id);
       console.log(`[telegram] /subscribe from ${chatId}`);
       const result = addUser(chatId);
-      await ctx.reply(result.message, { reply_markup: mainMenuKeyboard });
+      await ctx.reply(result.message, {
+        reply_markup: { remove_keyboard: true },
+      });
     });
 
     bot.command("unsubscribe", async (ctx) => {
       const chatId = String(ctx.chat.id);
       console.log(`[telegram] /unsubscribe from ${chatId}`);
       const result = removeUser(chatId);
-      await ctx.reply(result.message, { reply_markup: mainMenuKeyboard });
+      await ctx.reply(result.message, {
+        reply_markup: { remove_keyboard: true },
+      });
     });
 
     bot.command("status", async (ctx) => {
@@ -103,7 +94,9 @@ export async function POST(req: NextRequest) {
         `Subscribed: ${subscribed ? "✅ Yes" : "❌ No"}\n` +
         `Total Subscribers: ${totalUsers}\n\n` +
         `Daily reports are sent at 8:00 AM IST.`,
-        { reply_markup: mainMenuKeyboard }
+        {
+          reply_markup: { remove_keyboard: true },
+        }
       );
     });
 
@@ -123,55 +116,6 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      // Handle Interactive Menu Buttons
-      if (text === "📈 Daily Brief") {
-        const sent = await ctx.reply("Fetching your daily report...");
-        try {
-          const cronSecret = process.env.CRON_SECRET;
-          const origin = new URL(req.url).origin;
-          const url = `${origin}/api/cron/morning-brief`;
-          const res = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${cronSecret}`,
-            },
-          });
-          if (res.ok) {
-            await ctx.api.deleteMessage(ctx.chat.id, sent.message_id);
-          } else {
-            await ctx.api.editMessageText(ctx.chat.id, sent.message_id, "Report generated! Check your inbox.");
-          }
-        } catch (err) {
-          await ctx.api.editMessageText(ctx.chat.id, sent.message_id, "Report requested successfully.");
-        }
-        return;
-      }
-
-      if (text === "📊 My Status") {
-        const subscribed = isUserSubscribed(chatId);
-        const totalUsers = getSubscribedUsers().length;
-        await ctx.reply(
-          `📊 Subscription Status:\n\n` +
-          `Your Chat ID: ${chatId}\n` +
-          `Subscribed: ${subscribed ? "✅ Yes" : "❌ No"}\n` +
-          `Total Subscribers: ${totalUsers}\n\n` +
-          `Daily reports are sent at 8:00 AM IST.`,
-          { reply_markup: mainMenuKeyboard }
-        );
-        return;
-      }
-
-      if (text === "🔔 Subscribe") {
-        const result = addUser(chatId);
-        await ctx.reply(result.message, { reply_markup: mainMenuKeyboard });
-        return;
-      }
-
-      if (text === "🔕 Unsubscribe") {
-        const result = removeUser(chatId);
-        await ctx.reply(result.message, { reply_markup: mainMenuKeyboard });
-        return;
-      }
-
       // Auto-subscribe on first message
       if (!isUserSubscribed(chatId)) {
         addUser(chatId);
@@ -180,7 +124,9 @@ export async function POST(req: NextRequest) {
 
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return ctx.reply("Server misconfiguration. Please try again later.", { reply_markup: mainMenuKeyboard });
+        return ctx.reply("Server misconfiguration. Please try again later.", {
+          reply_markup: { remove_keyboard: true },
+        });
       }
 
       const sent = await ctx.reply("Scanning market data...");
