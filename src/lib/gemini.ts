@@ -9,6 +9,19 @@ const MAX_TOKENS = 120;
 
 // Common natural words mapped to their Yahoo Finance tickers
 const TICKER_MAPPINGS: Record<string, string> = {
+  "APPLE": "AAPL",
+  "AAPL": "AAPL",
+  "MICROSOFT": "MSFT",
+  "MSFT": "MSFT",
+  "GOOGLE": "GOOGL",
+  "GOOGL": "GOOGL",
+  "NVIDIA": "NVDA",
+  "NVDA": "NVDA",
+  "TESLA": "TSLA",
+  "TSLA": "TSLA",
+  "AMAZON": "AMZN",
+  "AMZN": "AMZN",
+  "META": "META",
   "BITCOIN": "BTC-USD",
   "BTC": "BTC-USD",
   "ETHEREUM": "ETH-USD",

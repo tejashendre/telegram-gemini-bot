@@ -51,13 +51,8 @@ export async function POST(req: NextRequest) {
     const bot = createBot();
     await bot.init();
 
-    // Set command menu lists dynamically
-    await bot.api.setMyCommands([
-      { command: "start", description: "Start the bot" },
-      { command: "status", description: "Check subscription status" },
-      { command: "subscribe", description: "Subscribe to daily reports" },
-      { command: "unsubscribe", description: "Unsubscribe from daily reports" }
-    ]);
+    // Cleanly delete all command menus on the left side of the input bar
+    await bot.api.deleteMyCommands();
 
     // ── COMMAND HANDLERS ──────────────────────────────────────────────
     bot.command("start", async (ctx) => {
@@ -94,13 +89,11 @@ export async function POST(req: NextRequest) {
       const chatId = String(ctx.chat.id);
       console.log(`[telegram] /status from ${chatId}`);
       const subscribed = isUserSubscribed(chatId);
-      const totalUsers = getSubscribedUsers().length;
 
       await ctx.reply(
         `📊 Subscription Status:\n\n` +
         `Your Chat ID: ${chatId}\n` +
-        `Subscribed: ${subscribed ? "✅ Yes" : "❌ No"}\n` +
-        `Total Subscribers: ${totalUsers}\n\n` +
+        `Subscribed: ${subscribed ? "✅ Yes" : "❌ No"}\n\n` +
         `Daily reports are sent at 8:00 AM IST.`,
         {
           reply_markup: { remove_keyboard: true },
