@@ -1,12 +1,19 @@
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
-const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a concise Financial Analyst. Current time: ${date}. Rules:
-- Reply in plain text only: no markdown, no asterisks (* or **), no brackets for citations.
-- Be factual and accurate. If you cite a number, give the current/latest figure available as of ${date}.
-- One or two short sentences. Only the price and one-sentence sentiment.
-- Never end abruptly or mid-sentence. Ensure all sentences are complete and fully written.`;
+const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a premium, highly skilled, professional Financial Analyst. Current time: ${date}.
+Your goal is to provide insightful, articulate, and accurate financial analysis based on the live market data provided.
 
-const MAX_TOKENS = 350;
+Structure your analysis beautifully using clean spacing, sections, or bullet points where appropriate:
+1. Provide a clear overview of the current performance and daily price action (using the live price and percentage changes provided).
+2. Detail the key levels (Day Range, 52-week High/Low, Volume) and explain what the visual 7-day trend shows.
+3. Summarize the immediate technical outlook, market sentiment, and any notable risks to be aware of.
+
+Rules:
+- Reply in plain text only: absolutely no markdown, no asterisks (* or **), no brackets for citations. Ensure the text is extremely clean and safe for Telegram to display.
+- Separate distinct paragraphs or sections with a single blank line so it looks readable and visually premium.
+- Never end abruptly or mid-sentence. Always finish your thought completely. Ensure a premium, unthrottled analysis. Keep it within 3-4 structured, readable paragraphs.`;
+
+const MAX_TOKENS = 2048;
 
 // Common natural words mapped to their Yahoo Finance tickers
 const TICKER_MAPPINGS: Record<string, string> = {
@@ -53,15 +60,52 @@ const IGNORED_WORDS = new Set([
   "HE", "SHE", "IT", "HIM", "HER", "THEM", "ITS", "OUR", "THEIRS", "FINANCE"
 ]);
 
-/** Strip markdown/asterisks so Telegram shows clean text. */
+export interface QuoteData {
+  symbol: string;
+  name: string;
+  price: number;
+  currency: string;
+  prevClose: number | null;
+  change: number | null;
+  changePercent: number | null;
+  dayLow: number | null;
+  dayHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  fiftyTwoWeekHigh: number | null;
+  volume: number | null;
+  sparkline: string;
+}
+
+/** Strip markdown/asterisks so Telegram shows clean text, but preserve newlines. */
 function cleanForTelegram(text: string): string {
   return text
     .replace(/\*\*/g, "")
     .replace(/\*/g, "")
     .replace(/\[[\d\s,]+\]/g, "")
     .replace(/\[\^?\d+\]/g, "")
-    .replace(/\s+/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
     .trim();
+}
+
+/**
+ * Generate a text-based sparkline trend chart from a list of prices
+ */
+function generateSparkline(prices: number[]): string {
+  if (prices.length === 0) return "";
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min;
+  const sparkTicks = [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
+  
+  return prices
+    .map((price) => {
+      if (range === 0) return sparkTicks[4];
+      const index = Math.floor(((price - min) / range) * (sparkTicks.length - 1));
+      return sparkTicks[Math.max(0, Math.min(sparkTicks.length - 1, index))];
+    })
+    .join("");
 }
 
 /**
@@ -94,14 +138,16 @@ function extractTicker(text: string): string | null {
 }
 
 /**
- * Fetch real-time price from Yahoo Finance public API for free grounding
+ * Fetch real-time price and comprehensive stats from Yahoo Finance public API
  */
-async function fetchLiveQuote(symbol: string): Promise<{ price: number; name: string } | null> {
+async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    // Fetch last 7 days of daily prices to generate sparkline and capture meta
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=7d`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0",
+        "Cache-Control": "no-cache",
       },
     });
     if (!res.ok) return null;
@@ -110,17 +156,62 @@ async function fetchLiveQuote(symbol: string): Promise<{ price: number; name: st
         result?: Array<{
           meta?: {
             regularMarketPrice?: number;
+            chartPreviousClose?: number;
+            fiftyTwoWeekHigh?: number;
+            fiftyTwoWeekLow?: number;
+            regularMarketDayHigh?: number;
+            regularMarketDayLow?: number;
+            regularMarketVolume?: number;
+            currency?: string;
             shortName?: string;
+          };
+          indicators?: {
+            quote?: Array<{
+              close?: Array<number | null>;
+            }>;
           };
         }>;
       };
     };
-    const meta = json.chart?.result?.[0]?.meta;
+
+    const chartResult = json.chart?.result?.[0];
+    const meta = chartResult?.meta;
     const price = meta?.regularMarketPrice ?? null;
-    const name = meta?.shortName || symbol;
-    
     if (price === null) return null;
-    return { price, name };
+
+    const name = meta?.shortName || symbol;
+    const currency = meta?.currency || "USD";
+    const prevClose = meta?.chartPreviousClose ?? null;
+    const change = prevClose !== null ? price - prevClose : null;
+    const changePercent = prevClose !== null ? (change! / prevClose) * 100 : null;
+
+    // Extract historical close prices for sparkline
+    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
+    const validPrices = rawCloses.filter((p): p is number => typeof p === "number" && p !== null);
+    
+    // Add current live price to the end if not already there
+    if (validPrices.length === 0 || validPrices[validPrices.length - 1] !== price) {
+      validPrices.push(price);
+    }
+    
+    // Generate 7-day sparkline
+    const sparkline = generateSparkline(validPrices.slice(-7));
+
+    return {
+      symbol,
+      name,
+      price,
+      currency,
+      prevClose,
+      change,
+      changePercent,
+      dayLow: meta?.regularMarketDayLow ?? null,
+      dayHigh: meta?.regularMarketDayHigh ?? null,
+      fiftyTwoWeekLow: meta?.fiftyTwoWeekLow ?? null,
+      fiftyTwoWeekHigh: meta?.fiftyTwoWeekHigh ?? null,
+      volume: meta?.regularMarketVolume ?? null,
+      sparkline,
+    };
   } catch {
     return null;
   }
@@ -138,7 +229,35 @@ export async function queryGemini(
   if (ticker) {
     const quote = await fetchLiveQuote(ticker);
     if (quote) {
-      liveDataPrompt = `\n\n[Real-time Live Market Data Context]:\n- Asset: ${quote.name} (${ticker})\n- Live Price: $${quote.price} (INR/gram if Gold)\nUse this live price data as the absolute truth to answer the user's question concisely!`;
+      const changeSign = quote.change !== null && quote.change >= 0 ? "+" : "";
+      const changeStr = quote.change !== null && quote.changePercent !== null
+        ? `${changeSign}${quote.change.toFixed(2)} (${changeSign}${quote.changePercent.toFixed(2)}%)`
+        : "N/A";
+      
+      const dayRangeStr = quote.dayLow !== null && quote.dayHigh !== null
+        ? `$${quote.dayLow.toFixed(2)} - $${quote.dayHigh.toFixed(2)}`
+        : "N/A";
+
+      const fiftyTwoWeekRangeStr = quote.fiftyTwoWeekLow !== null && quote.fiftyTwoWeekHigh !== null
+        ? `$${quote.fiftyTwoWeekLow.toFixed(2)} - $${quote.fiftyTwoWeekHigh.toFixed(2)}`
+        : "N/A";
+
+      const volumeStr = quote.volume !== null
+        ? (quote.volume >= 1e6 ? `${(quote.volume / 1e6).toFixed(2)}M` : quote.volume.toLocaleString())
+        : "N/A";
+
+      liveDataPrompt = `\n\n[Real-time Live Market Data Context]:
+- Asset Name: ${quote.name}
+- Ticker/Symbol: ${quote.symbol}
+- Current Live Price: $${quote.price.toFixed(2)} ${quote.currency}
+- Daily Change: ${changeStr}
+- Previous Day Close Price: $${quote.prevClose !== null ? quote.prevClose.toFixed(2) : "N/A"}
+- Day's Trading Range: ${dayRangeStr}
+- 52-Week Trading Range: ${fiftyTwoWeekRangeStr}
+- Market Trading Volume: ${volumeStr} shares
+- Recent 7-day Close Price Trend: [ ${quote.sparkline} ]
+
+Use this live market data as the absolute, single source of truth for current prices and performance indicators. Use it to provide a highly detailed, professional, and factually accurate summary of the asset's behavior, outlook, and current market state!`;
     }
   }
 

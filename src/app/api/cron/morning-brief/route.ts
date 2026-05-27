@@ -176,13 +176,13 @@ async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<stri
       systemInstruction: {
         parts: [
           {
-            text: `You are a Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide concise analysis in 2 sentences. Flag any risks. Use plain text only, no markdown.`,
+            text: `You are a premium Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide a highly articulate, 2-3 paragraph summary of today's market conditions. Highlight the S&P 500, Gold, and Nifty movements, compare them, comment on the Crypto and USD/INR Forex trends, and clearly flag the primary market risks. Do not truncate mid-sentence. Keep it clean and readable with clear spacing. Plain text only, absolutely no markdown or asterisks.`,
           },
         ],
       },
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 350,
+        maxOutputTokens: 1000,
       },
     }),
   });
@@ -201,7 +201,15 @@ async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<stri
   };
 
   const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  return content.replace(/\*\*/g, "").replace(/\*/g, "").replace(/\[[\d\s,]+\]/g, "").replace(/\[\^?\d+\]/g, "").replace(/\s+/g, " ").trim();
+  return content
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/\[[\d\s,]+\]/g, "")
+    .replace(/\[\^?\d+\]/g, "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .trim();
 }
 
 export async function GET(req: NextRequest) {
