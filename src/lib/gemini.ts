@@ -296,6 +296,9 @@ Use this live market data as the absolute, single source of truth for current pr
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: MAX_TOKENS,
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
       },
     }),
   });
