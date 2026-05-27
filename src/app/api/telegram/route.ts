@@ -1,11 +1,11 @@
 import { Bot } from "grammy";
 import { NextRequest, NextResponse } from "next/server";
 import { queryGemini } from "@/lib/gemini";
+import { generateMorningBrief } from "@/lib/brief-generator";
 import {
   addUser,
   removeUser,
   isUserSubscribed,
-  getSubscribedUsers,
 } from "@/lib/user-storage";
 
 export const maxDuration = 60;
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       console.log(`[telegram] /start from ${chatId}`);
       addUser(chatId);
       await ctx.reply(
-        `👋 Welcome to Telegram Gemini Bot! Send me any ticker or financial question (e.g. AAPL, Bitcoin) to get started.`,
+        `👋 Welcome to Telegram Gemini Bot! Send me any ticker or financial question (e.g. AAPL, Bitcoin) to get started.\n\nYou can also click the Daily Brief button or type "Daily Brief" to get a comprehensive real-time financial report!`,
         {
           reply_markup: { remove_keyboard: true }, // Instantly removes the custom reply keyboard from user's screen
         }
@@ -101,6 +101,33 @@ export async function POST(req: NextRequest) {
       );
     });
 
+    bot.command("brief", async (ctx) => {
+      const chatId = String(ctx.chat.id);
+      console.log(`[telegram] /brief from ${chatId}`);
+      
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return ctx.reply("Server misconfiguration. Please try again later.", {
+          reply_markup: { remove_keyboard: true },
+        });
+      }
+
+      const sent = await ctx.reply("Generating your real-time financial report...");
+
+      try {
+        const { message } = await generateMorningBrief(apiKey);
+        await ctx.api.deleteMessage(ctx.chat.id, sent.message_id);
+        await ctx.reply(message, { parse_mode: "Markdown" });
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to generate brief.";
+        await ctx.api.editMessageText(
+          ctx.chat.id,
+          sent.message_id,
+          `Error: ${errorMsg}`
+        );
+      }
+    });
+
     // ── TEXT HANDLER (non-command messages only) ──────────────────────
     bot.on("message:text", async (ctx) => {
       const chatId = String(ctx.chat.id);
@@ -128,6 +155,26 @@ export async function POST(req: NextRequest) {
         return ctx.reply("Server misconfiguration. Please try again later.", {
           reply_markup: { remove_keyboard: true },
         });
+      }
+
+      // Handle the "Daily Brief" button action
+      if (text.toLowerCase().includes("daily brief")) {
+        console.log(`[telegram] Triggering manual Daily Brief for ${chatId}`);
+        const sent = await ctx.reply("Generating your real-time financial report...");
+
+        try {
+          const { message } = await generateMorningBrief(apiKey);
+          await ctx.api.deleteMessage(ctx.chat.id, sent.message_id);
+          await ctx.reply(message, { parse_mode: "Markdown" });
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : "Failed to generate brief.";
+          await ctx.api.editMessageText(
+            ctx.chat.id,
+            sent.message_id,
+            `Error: ${errorMsg}`
+          );
+        }
+        return;
       }
 
       const sent = await ctx.reply("Scanning market data...");
