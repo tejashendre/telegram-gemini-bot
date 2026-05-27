@@ -22,6 +22,23 @@ const TICKER_MAPPINGS: Record<string, string> = {
   "S&P500": "^GSPC",
 };
 
+const IGNORED_WORDS = new Set([
+  "WHAT", "HOW", "WHY", "WHO", "WHEN", "WHERE", "WHICH", "THIS", "THAT",
+  "THE", "FOR", "AND", "BUT", "GET", "GIVE", "SHOW", "TELL", "IS",
+  "ARE", "WAS", "WERE", "AM", "BE", "BEING", "BEEN", "HAVE", "HAS", "HAD",
+  "DO", "DOES", "DID", "DOING", "WILL", "WOULD", "SHALL", "SHOULD", "CAN",
+  "COULD", "MAY", "MIGHT", "MUST", "PRICE", "STOCK", "SHARE", "ABOUT",
+  "TODAY", "NOW", "LIVE", "REAL", "TIME", "CHART", "INFO", "DATA", "NEWS",
+  "RATE", "VALUE", "COST", "ANY", "SOME", "MANY", "MUCH", "MORE", "MOST",
+  "FEW", "LESS", "LEAST", "OWN", "OTHER", "ANOTHER", "SUCH", "SAME", "VERY",
+  "SO", "TOO", "ALSO", "ONLY", "JUST", "EVEN", "STILL", "YET", "ALREADY",
+  "ALMOST", "AGAIN", "ON", "IN", "AT", "TO", "OF", "BY", "WITH", "FROM",
+  "AS", "THAN", "LIKE", "INTO", "OVER", "UNDER", "ABOVE", "BELOW", "UP", "DOWN",
+  "OUT", "OFF", "THROUGH", "BETWEEN", "AMONG", "HELLO", "HI", "HEY", "DEAR",
+  "PLEASE", "THANKS", "THANK", "YOU", "YOUR", "ME", "MY", "I", "WE", "US", "THEY",
+  "HE", "SHE", "IT", "HIM", "HER", "THEM", "ITS", "OUR", "THEIRS", "FINANCE"
+]);
+
 /** Strip markdown/asterisks so Telegram shows clean text. */
 function cleanForTelegram(text: string): string {
   return text
@@ -47,9 +64,14 @@ function extractTicker(text: string): string | null {
     }
   }
   
-  // Check for standard stock tickers (uppercase alphabetic of length 2-5)
+  // Check for standard stock tickers (uppercase alphabetic of length 2-5), excluding stopwords
   for (const word of words) {
-    if (word.length >= 2 && word.length <= 5 && /^[A-Z]+$/.test(word)) {
+    if (
+      word.length >= 2 && 
+      word.length <= 5 && 
+      /^[A-Z]+$/.test(word) && 
+      !IGNORED_WORDS.has(word)
+    ) {
       return word;
     }
   }

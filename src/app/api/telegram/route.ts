@@ -51,6 +51,14 @@ export async function POST(req: NextRequest) {
     const bot = createBot();
     await bot.init();
 
+    // Set command menu lists dynamically
+    await bot.api.setMyCommands([
+      { command: "start", description: "Start the bot" },
+      { command: "status", description: "Check subscription status" },
+      { command: "subscribe", description: "Subscribe to daily reports" },
+      { command: "unsubscribe", description: "Unsubscribe from daily reports" }
+    ]);
+
     // ── COMMAND HANDLERS ──────────────────────────────────────────────
     bot.command("start", async (ctx) => {
       const chatId = String(ctx.chat.id);
