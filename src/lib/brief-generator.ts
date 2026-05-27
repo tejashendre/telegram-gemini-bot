@@ -225,7 +225,7 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
             role: "user",
             parts: [
               {
-                text: `Here is the comprehensive real-time financial market data:\n${dataSummary}\n\nAnalyze the daily trends, compare performance of equities vs gold, analyze the crypto sentiment, and assess the exchange rate impact. Offer a coherent market summary. Clearly highlight risks.`,
+                text: `Here is the comprehensive real-time financial market data:\n${dataSummary}\n\nProvide the required concise sentiment summary, trends, and risk assessment based on this data.`,
               },
             ],
           },
@@ -233,7 +233,24 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
         systemInstruction: {
           parts: [
             {
-              text: `You are a premium Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide a highly articulate, 2-3 paragraph summary of today's market conditions based strictly on the provided price change magnitudes and percentage movements. Speak authoritatively on market sentiment, trends, and comparison indicators (e.g. outperformance/underperformance). Clearly flag the primary market risks. Do not truncate mid-sentence. Keep it clean and readable with clear spacing. Plain text only, absolutely no markdown or asterisks.`,
+              text: `You are a premium, ultra-concise Real-Time Financial Terminal. Current time: ${new Date().toISOString()}.
+Your goal is to provide a highly informative, to-the-point, and data-driven market summary under 200 words total.
+Structure your analysis strictly into these three sections using clear line breaks:
+
+SENTIMENT SUMMARY
+Provide a single, powerful sentence summarizing the overall market direction and mood (bullish, bearish, or mixed) based on the price movements.
+
+KEY TRENDS & COMPARISONS
+- Provide 2-3 short, dense bullet points using plain text.
+- Directly compare equities vs gold and highlight crypto/forex performance using the percentage changes.
+
+PRIMARY RISKS
+- Provide 1-2 bullet points flagging key immediate risks based on the day's data.
+
+Rules:
+- Strictly limit output to under 200 words. Focus purely on high-signal data.
+- Plain text only. Absolutely no markdown, no asterisks (* or **), no brackets.
+- Plan your response carefully so that it is fully completed and never cuts off mid-sentence.`,
             },
           ],
         },
