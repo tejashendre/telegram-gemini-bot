@@ -58,9 +58,9 @@ export async function POST(req: NextRequest) {
     bot.command("start", async (ctx) => {
       const chatId = String(ctx.chat.id);
       console.log(`[telegram] /start from ${chatId}`);
-      const subscribeResult = addUser(chatId);
+      addUser(chatId);
       await ctx.reply(
-        `👋 Welcome to Telegram Gemini Bot! Send me a ticker or question (e.g. AAPL, Bitcoin price) for real-time prices and market sentiment.\n\n${subscribeResult.message}\n\nCommands:\n/subscribe - receive daily reports\n/unsubscribe - stop daily reports\n/status - check your subscription`,
+        `👋 Welcome to Telegram Gemini Bot! Send me any ticker or financial question (e.g. AAPL, Bitcoin) to get started.`,
         {
           reply_markup: { remove_keyboard: true }, // Instantly removes the custom reply keyboard from user's screen
         }
