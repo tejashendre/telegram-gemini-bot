@@ -3,9 +3,10 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/
 const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a concise Financial Analyst. Current time: ${date}. Rules:
 - Reply in plain text only: no markdown, no asterisks (* or **), no brackets for citations.
 - Be factual and accurate. If you cite a number, give the current/latest figure available as of ${date}.
-- One or two short sentences. Only the price and one-sentence sentiment.`;
+- One or two short sentences. Only the price and one-sentence sentiment.
+- Never end abruptly or mid-sentence. Ensure all sentences are complete and fully written.`;
 
-const MAX_TOKENS = 120;
+const MAX_TOKENS = 350;
 
 // Common natural words mapped to their Yahoo Finance tickers
 const TICKER_MAPPINGS: Record<string, string> = {

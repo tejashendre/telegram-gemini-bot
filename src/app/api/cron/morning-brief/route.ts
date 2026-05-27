@@ -182,7 +182,7 @@ async function queryGeminiRealTime(prompt: string, apiKey: string): Promise<stri
       },
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 200,
+        maxOutputTokens: 350,
       },
     }),
   });
