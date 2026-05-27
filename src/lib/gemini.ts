@@ -87,8 +87,10 @@ export interface QuoteData {
 /** Strip markdown/asterisks so Telegram shows clean text, but preserve newlines. */
 function cleanForTelegram(text: string): string {
   return text
-    .replace(/\*\*/g, "")
     .replace(/\*/g, "")
+    .replace(/_/g, " ")
+    .replace(/[\[\]]/g, "")
+    .replace(/`/g, "")
     .replace(/\[[\d\s,]+\]/g, "")
     .replace(/\[\^?\d+\]/g, "")
     .split("\n")

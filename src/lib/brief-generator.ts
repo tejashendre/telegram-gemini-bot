@@ -276,8 +276,10 @@ Rules:
 
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     aiSummary = content
-      .replace(/\*\*/g, "")
       .replace(/\*/g, "")
+      .replace(/_/g, " ")
+      .replace(/[\[\]]/g, "")
+      .replace(/`/g, "")
       .replace(/\[[\d\s,]+\]/g, "")
       .replace(/\[\^?\d+\]/g, "")
       .split("\n")
