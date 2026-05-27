@@ -12,6 +12,9 @@ export interface MarketData {
   symbol: string;
   name: string;
   price: number | null;
+  prevClose: number | null;
+  change: number | null;
+  changePercent: number | null;
   marketTime: number | null;
   isLive: boolean;
   status: "LIVE" | "Closing Price";
@@ -57,6 +60,7 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
         result?: Array<{
           meta?: {
             regularMarketPrice?: number;
+            chartPreviousClose?: number;
             regularMarketTime?: number;
             shortName?: string;
             symbol?: string;
@@ -73,8 +77,12 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
     const chartResult = json.chart?.result?.[0];
     const meta = chartResult?.meta;
     const price = meta?.regularMarketPrice ?? null;
+    const prevClose = meta?.chartPreviousClose ?? null;
     const marketTime = meta?.regularMarketTime ?? null;
     const name = meta?.shortName || symbol;
+
+    const change = (price !== null && prevClose !== null) ? price - prevClose : null;
+    const changePercent = (price !== null && prevClose !== null) ? (change! / prevClose) * 100 : null;
 
     const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
     const validPrices = rawCloses.filter((p): p is number => typeof p === "number" && p !== null);
@@ -93,10 +101,32 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
       status = isLive ? "LIVE" : "Closing Price";
     }
 
-    return { symbol, name, price, marketTime, isLive, status, sparkline };
+    return {
+      symbol,
+      name,
+      price,
+      prevClose,
+      change,
+      changePercent,
+      marketTime,
+      isLive,
+      status,
+      sparkline,
+    };
   } catch (error) {
     console.error(`[yahoo] Error ${symbol}:`, error);
-    return { symbol, name: symbol, price: null, marketTime: null, isLive: false, status: "Closing Price", sparkline: "" };
+    return {
+      symbol,
+      name: symbol,
+      price: null,
+      prevClose: null,
+      change: null,
+      changePercent: null,
+      marketTime: null,
+      isLive: false,
+      status: "Closing Price",
+      sparkline: "",
+    };
   }
 }
 
@@ -116,6 +146,12 @@ export function formatMarketData(data: MarketData): string {
       priceStr = `$${data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else {
       priceStr = `$${data.price.toFixed(2)}`;
+    }
+
+    // Append daily change and percent change if available
+    if (data.change !== null && data.changePercent !== null) {
+      const sign = data.change >= 0 ? "+" : "";
+      priceStr += ` (${sign}${data.change.toFixed(2)} / ${sign}${data.changePercent.toFixed(2)}%)`;
     }
   }
 
@@ -168,7 +204,14 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
 
   let aiSummary: string;
   try {
-    const dataSummary = `S&P 500: $${sp500.price.toFixed(2)}; Gold: $${gold.price.toFixed(2)}/oz; Nifty 50: ${nifty.price?.toFixed(2) ?? "N/A"}; BTC: $${btc.price?.toFixed(2) ?? "N/A"}; ETH: $${eth.price?.toFixed(2) ?? "N/A"}; USD/INR: ₹${usdinr.price?.toFixed(2) ?? "N/A"}`;
+    const dataSummary = `
+- S&P 500: $${sp500.price.toFixed(2)} (Prev Close: $${sp500.prevClose?.toFixed(2)}, Change: ${sp500.change?.toFixed(2)}, % Change: ${sp500.changePercent?.toFixed(2)}%)
+- Gold: $${gold.price.toFixed(2)}/oz (Prev Close: $${gold.prevClose?.toFixed(2)}, Change: ${gold.change?.toFixed(2)}, % Change: ${gold.changePercent?.toFixed(2)}%)
+- Nifty 50: ${nifty.price !== null ? nifty.price.toFixed(2) : "N/A"} (Prev Close: ${nifty.prevClose?.toFixed(2)}, Change: ${nifty.change?.toFixed(2)}, % Change: ${nifty.changePercent?.toFixed(2)}%)
+- BTC: $${btc.price !== null ? btc.price.toFixed(2) : "N/A"} (Prev Close: $${btc.prevClose?.toFixed(2)}, Change: ${btc.change?.toFixed(2)}, % Change: ${btc.changePercent?.toFixed(2)}%)
+- ETH: $${eth.price !== null ? eth.price.toFixed(2) : "N/A"} (Prev Close: $${eth.prevClose?.toFixed(2)}, Change: ${eth.change?.toFixed(2)}, % Change: ${eth.changePercent?.toFixed(2)}%)
+- USD/INR: ₹${usdinr.price !== null ? usdinr.price.toFixed(2) : "N/A"} (Prev Close: ${usdinr.prevClose?.toFixed(2)}, Change: ${usdinr.change?.toFixed(2)}, % Change: ${usdinr.changePercent?.toFixed(2)}%)
+`;
     
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
     const res = await fetch(url, {
@@ -182,7 +225,7 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
             role: "user",
             parts: [
               {
-                text: `Market data: ${dataSummary}. Analyze trends, ratios, crypto, and exchange rates. Provide a concise sentiment summary. Flag risks.`,
+                text: `Here is the comprehensive real-time financial market data:\n${dataSummary}\n\nAnalyze the daily trends, compare performance of equities vs gold, analyze the crypto sentiment, and assess the exchange rate impact. Offer a coherent market summary. Clearly highlight risks.`,
               },
             ],
           },
@@ -190,7 +233,7 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
         systemInstruction: {
           parts: [
             {
-              text: `You are a premium Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide a highly articulate, 2-3 paragraph summary of today's market conditions. Highlight the S&P 500, Gold, and Nifty movements, compare them, comment on the Crypto and USD/INR Forex trends, and clearly flag the primary market risks. Do not truncate mid-sentence. Keep it clean and readable with clear spacing. Plain text only, absolutely no markdown or asterisks.`,
+              text: `You are a premium Real-Time Financial Terminal. Current time: ${new Date().toISOString()}. Provide a highly articulate, 2-3 paragraph summary of today's market conditions based strictly on the provided price change magnitudes and percentage movements. Speak authoritatively on market sentiment, trends, and comparison indicators (e.g. outperformance/underperformance). Clearly flag the primary market risks. Do not truncate mid-sentence. Keep it clean and readable with clear spacing. Plain text only, absolutely no markdown or asterisks.`,
             },
           ],
         },
