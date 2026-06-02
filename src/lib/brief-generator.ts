@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "./gemini";
+
 // Real-time market symbols (Yahoo Finance v8 API)
 export const SYMBOLS = {
   SP500: "^GSPC",
@@ -214,7 +216,7 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
 `;
     
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -257,14 +259,16 @@ Rules:
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
-          thinkingConfig: {
-            thinkingBudget: 0,
-          },
         },
       }),
     });
 
-    if (!res.ok) throw new Error(`Gemini API error ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 429) {
+        throw new Error("API Rate Limit Exceeded");
+      }
+      throw new Error(`Gemini API error ${res.status}`);
+    }
 
     const data = await res.json() as {
       candidates?: Array<{
@@ -288,7 +292,12 @@ Rules:
       .trim();
   } catch (err) {
     console.error("[brief-generator] AI summary failed:", err);
-    aiSummary = "AI analysis temporarily unavailable.";
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.includes("Rate Limit") || errMsg.includes("429")) {
+      aiSummary = "AI analysis temporarily unavailable due to rate limits. Please try again in a minute.";
+    } else {
+      aiSummary = "AI analysis temporarily unavailable.";
+    }
   }
 
   const latencyMs = Date.now() - executionStart;

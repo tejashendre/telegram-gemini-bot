@@ -51,8 +51,14 @@ export async function POST(req: NextRequest) {
     const bot = createBot();
     await bot.init();
 
-    // Cleanly delete all command menus on the left side of the input bar
-    await bot.api.deleteMyCommands();
+    // Set up command menus for the user
+    await bot.api.setMyCommands([
+      { command: "start", description: "Start the bot" },
+      { command: "brief", description: "Get Real-Time Financial Report" },
+      { command: "subscribe", description: "Subscribe to Daily Brief" },
+      { command: "unsubscribe", description: "Unsubscribe from Daily Brief" },
+      { command: "status", description: "Check subscription status" }
+    ]);
 
     // ── COMMAND HANDLERS ──────────────────────────────────────────────
     bot.command("start", async (ctx) => {

@@ -229,6 +229,39 @@ async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
 
 export type GeminiMessage = { role: "system" | "user" | "model"; content: string };
 
+export async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  delayMs = 1000
+): Promise<Response> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) {
+        return response;
+      }
+      
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(`[Gemini API] Attempt ${attempt} failed with status ${response.status}. Retrying in ${delayMs * attempt}ms...`);
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+          continue;
+        }
+      }
+      return response;
+    } catch (err) {
+      console.warn(`[Gemini API] Attempt ${attempt} connection failed:`, err);
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error(`Request failed after ${retries} retries`);
+}
+
 export async function queryGemini(
   userMessage: string,
   apiKey: string
@@ -272,7 +305,7 @@ Use this live market data as the absolute, single source of truth for current pr
   }
 
   const url = `${GEMINI_API_URL}?key=${apiKey}`;
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -298,15 +331,15 @@ Use this live market data as the absolute, single source of truth for current pr
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: MAX_TOKENS,
-        thinkingConfig: {
-          thinkingBudget: 0,
-        },
       },
     }),
   });
 
   if (!response.ok) {
     const errText = await response.text();
+    if (response.status === 429) {
+      throw new Error("AI rate limit exceeded. Please wait a minute before querying again.");
+    }
     throw new Error(`Gemini API error ${response.status}: ${errText}`);
   }
 
