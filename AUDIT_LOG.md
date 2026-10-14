@@ -21,3 +21,11 @@ User requests one-shot short project film, necessary asset downloads and GitHub 
 Created a 28-second silent 1920x1080 / 60 fps film using actual bot-engine output in an isolated, labelled demo console. Processing waits are shortened and quotes are dated. One complete master render, with still and motion checks beforehand.
 Final export passed full decode, 1680 frames, duration, resolution, H.264 High, yuv420p, limited-range BT.709 and faststart checks. SHA256: 92a9aff3d4a935290c0133d6cb30e22b695f025b70eb88aff768150b153a1c9b.
 Scope: media/video, poster, retained public demo evidence, provenance and README link. Bot runtime unchanged. Publication explicitly requested; next action is GitHub push.
+
+## 2026-10-14 film palette revision
+Owner requests refreshing colours outside the Telegram chat. Scope: media and poster revision only, preserve bot footage and timing. Build in FILM_V2 and retain V1 locally.
+
+## 2026-10-14 palette revision verified
+Replaced the world outside the chat with pale mint and warm ivory, forest text and green illustrated flow. Identical chat source hash and timing retained; no bot runtime changes. Original navy version preserved locally and in Git history.
+V2 export passed full decode, exact 28 seconds / 1680 frames at 1920x1080 / 60 fps, H.264 High, yuv420p, limited-range BT.709 and faststart. SHA256: 87fd1c672b784ac08e897486c435af9b1ddaa4f594b534e43cedbd3b27b2fc4a.
+Revised video and poster prepared. Next: push and compare remote media blob hashes.
