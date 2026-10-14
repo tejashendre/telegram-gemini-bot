@@ -1,0 +1,15 @@
+# AUDIT_LOG
+
+## 2026-10-14 intake
+Request: restore Telegram bot, use replacement credentials and an available free-tier Gemini model, sync GitHub, send Telegram status.
+Scope: this repository and its existing deployment. First slice: diagnose webhook/configuration and provider failures without displaying secrets.
+
+## 2026-10-14 verified repair
+Seven regressions pass; standalone TypeScript check, lint, and Next.js 14.2.35 production build pass. Live AAPL analysis and full brief both contain AI output using Gemini 3 Flash Preview fallback.
+Changed: shared Gemini client, brief calculations, diagnostic authorization, dependency patch, ignore rules and recovery documentation. Production credentials updated without displaying values.
+Next: finish production deployment, verify authenticated diagnostic and webhook delivery, push verified files, send Tejas a status message.
+
+## 2026-10-14 production recovery complete
+Production alias https://tejas-gemini-bot.vercel.app deployed successfully. Authenticated Gemini diagnostic returned 200 with analysis; both unauthenticated diagnostics returned 401; Telegram webhook has zero pending updates. Owner-only /brief invocation returned 200 after Telegram delivery.
+Repair commit e7afdb7 pushed to origin/main. Owner status message accepted by Telegram with message ID 742. Secrets and private-key files remain ignored and were excluded from commits.
+Current provider limitation: Gemini 3.8 Flash returns 503; Gemini 3.5 Flash-Lite daily free quota is exhausted. Configured Gemini 3 Flash Preview fallback passed live chat, brief and production checks. No paid upgrade was made.
