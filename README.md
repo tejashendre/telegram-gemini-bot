@@ -4,9 +4,13 @@
 
 A Next.js 14 (App Router) Telegram bot using the Gemini API (gemini-3.8-flash with gemini-3-flash-preview fallback model) for real-time financial data synthesis and market sentiment delivery. Uses webhooks and interim Telegram messages for Vercel serverless.
 
-**Demo video:** _coming shortly_ | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
+**Demo video:** [Watch the 28-second project film](media/telegram-gemini-bot-demo.mp4) | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
 ---
+
+[![Watch the Telegram Gemini Bot project film](media/telegram-gemini-bot-poster.jpg)](https://github.com/tejashendre/telegram-gemini-bot/blob/main/media/telegram-gemini-bot-demo.mp4)
+
+A silent, 28-second walkthrough using actual bot-engine output in a labelled demo console. Processing is shortened; captured quotes are dated 14 October 2026. [Film provenance](media/README.md).
 
 ## 1. The Business Problem (Why I built this)
 
