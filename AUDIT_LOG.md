@@ -1,5 +1,8 @@
 # AUDIT_LOG
 
+## 2026-10-15 paired iPhone film delivery intake
+Owner selected Deep Techno Ambience, requested relevant left text/logos, an iPhone on the right, a physically longer Gemini request line, and independently designed 16:9 and 9:16 films. Owner explicitly requested one-pass completion after reviewing drafts. Both local 20-second/60-fps exports now pass verification. Scope: publish the two verified media files, posters and truthful provenance; update README playback. Bot runtime and credentials remain untouched. GitHub attachment upload is blocked by Chrome extension local-file access being disabled; owner setting approval requested while repository delivery proceeds.
+
 ## 2026-10-14 intake
 Request: restore Telegram bot, use replacement credentials and an available free-tier Gemini model, sync GitHub, send Telegram status.
 Scope: this repository and its existing deployment. First slice: diagnose webhook/configuration and provider failures without displaying secrets.
@@ -33,3 +36,8 @@ Revised video and poster prepared. Next: push and compare remote media blob hash
 ## 2026-10-14 film publication complete
 Palette revision e762572 pushed to origin/main. GitHub API blob hashes for both the MP4 (9705231 bytes) and poster (370099 bytes) match the local verified files.
 Film and poster are linked from the project README. Runtime unchanged. Owner acceptance of the refreshed creative remains pending feedback.
+
+## Rejection and revised review sequence: 14 October 2026
+Owner verdict: "zero marks video". Specific failures: static/slide-like picture, no selected music or sound effects, no creative discussion, no scrubbable HyperFrames owner review, and no inline README video playback. The owner also confirms that specific external inspiration visits and frame study must precede choosing the visual direction.
+Owner selected rhythmic product-launch direction, but has not selected visual references, exact music, text or motion. Next: present verified reference visits, ask what elements the owner likes, then audition music and agree copy, then review an editable moving passage. No full render or further publication before those reviews.
+This supersedes earlier one-shot-as-waiver assumptions. Export metadata checks and remote blob matches were technical passes, not creative completion.
