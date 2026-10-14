@@ -3,6 +3,11 @@
 ## 2026-10-15 paired iPhone film delivery intake
 Owner selected Deep Techno Ambience, requested relevant left text/logos, an iPhone on the right, a physically longer Gemini request line, and independently designed 16:9 and 9:16 films. Owner explicitly requested one-pass completion after reviewing drafts. Both local 20-second/60-fps exports now pass verification. Scope: publish the two verified media files, posters and truthful provenance; update README playback. Bot runtime and credentials remain untouched. GitHub attachment upload is blocked by Chrome extension local-file access being disabled; owner setting approval requested while repository delivery proceeds.
 
+## 2026-10-15 remote verification and attachment blocker
+Film commit afa5057 pushed to origin/main. Both new MP4s are tracked. GitHub Contents API matches local Git object SHA and size: landscape b80efd730e45f333df886d8e92c5988e8d180bd4 / 5114271 bytes; portrait 07befbeb11231c05b374326440dedeeaf7cdbfc2 / 5124644 bytes. README now names both films and offers valid repository download links; inline playback is not claimed.
+
+Owner explicitly approved and confirmed enabling ChatGPT extension file-URL access. Laptop Chrome profile Tejas is signed in to the correct GitHub repository. Attachment setFiles still fails with the same file-access error after a fresh editor load and one browser-control reconnect. In-app browser lacks GitHub sign-in. Browser policy rejected opening chrome://extensions, so no settings bypass was attempted. Stop automated upload retries. Exact next action: owner manually selects the two verified MP4s through the open GitHub editor attachment button; then capture the resulting attachment URLs, insert one bare URL per orientation in README, push, and verify both actual players. No new render needed.
+
 ## 2026-10-14 intake
 Request: restore Telegram bot, use replacement credentials and an available free-tier Gemini model, sync GitHub, send Telegram status.
 Scope: this repository and its existing deployment. First slice: diagnose webhook/configuration and provider failures without displaying secrets.

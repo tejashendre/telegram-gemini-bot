@@ -22,5 +22,5 @@
 - [x] Design independent 16:9 and 9:16 iPhone films, preserving relevant text/data and removing the outline highlight.
 - [x] Render each 20-second/60-fps composition once and verify encoded video/audio.
 - [x] Prepare both tracked repository MP4s, posters and source/rights provenance.
-- [ ] Push and verify matching remote MP4s.
-- [ ] Upload GitHub attachments and verify both inline README players; browser local-file access approval pending.
+- [x] Push and verify matching remote MP4s: afa5057, both GitHub blob hashes and sizes match local files.
+- [ ] Upload GitHub attachments and verify both inline README players. Owner approved/enabled local-file access; Chrome upload tool still reports it disabled after refresh and reconnect. Manual attachment selection is the next action.
