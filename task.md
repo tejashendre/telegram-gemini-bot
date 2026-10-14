@@ -9,4 +9,4 @@
 ## Telegram Gemini Bot project film
 - [x] Create and verify a silent short film from actual engine output.
 - [x] Refresh colours outside the chat while preserving the footage and timing.
-- [ ] Publish revised video and poster and verify GitHub media hashes.
+- [x] Publish revised video and poster and verify GitHub media hashes.

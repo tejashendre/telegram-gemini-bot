@@ -29,3 +29,7 @@ Owner requests refreshing colours outside the Telegram chat. Scope: media and po
 Replaced the world outside the chat with pale mint and warm ivory, forest text and green illustrated flow. Identical chat source hash and timing retained; no bot runtime changes. Original navy version preserved locally and in Git history.
 V2 export passed full decode, exact 28 seconds / 1680 frames at 1920x1080 / 60 fps, H.264 High, yuv420p, limited-range BT.709 and faststart. SHA256: 87fd1c672b784ac08e897486c435af9b1ddaa4f594b534e43cedbd3b27b2fc4a.
 Revised video and poster prepared. Next: push and compare remote media blob hashes.
+
+## 2026-10-14 film publication complete
+Palette revision e762572 pushed to origin/main. GitHub API blob hashes for both the MP4 (9705231 bytes) and poster (370099 bytes) match the local verified files.
+Film and poster are linked from the project README. Runtime unchanged. Owner acceptance of the refreshed creative remains pending feedback.
