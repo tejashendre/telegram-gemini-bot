@@ -2,7 +2,7 @@
 
 > **Real-time market data sentiment and financial telemetry bot delivered straight to your phone.**
 
-A Next.js 14 (App Router) Telegram bot using the Gemini API (gemini-flash-latest model) for real-time financial data synthesis and market sentiment delivery. Uses webhooks and the interim-acknowledgment pattern for Vercel serverless.
+A Next.js 14 (App Router) Telegram bot using the Gemini API (gemini-3.8-flash with gemini-3-flash-preview fallback model) for real-time financial data synthesis and market sentiment delivery. Uses webhooks and interim Telegram messages for Vercel serverless.
 
 **Demo video:** _coming shortly_ | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
@@ -18,7 +18,7 @@ This bot was built to act as a financial telemetry engine, consuming real-time m
 
 ## 2. System Architecture & Flow
 
-To bypass Vercel's strict serverless timeout limits, the system uses an interim-acknowledgment pattern. It responds to Telegram instantly while processing the actual intelligence payload asynchronously.
+The webhook sends an interim Telegram message while processing the query. It awaits the result and Telegram delivery before returning HTTP 200. Bounded provider requests keep the operation within Vercel's function duration.
 
 ```mermaid
 graph TD
@@ -41,8 +41,8 @@ graph TD
 
 ## 3. Core Principles & Execution (How I do my work)
 
-- **Serverless Resilience:** Designed specifically for Vercel's App Router environment. The webhook immediately returns a 200 OK to Telegram to prevent retry floods, then handles the heavy LLM/API workloads asynchronously.
-- **Speed over Bloat:** Uses `gemini-flash-latest` because intelligence delivery on mobile messaging needs to be near-instantaneous.
+- **Serverless Resilience:** Designed specifically for Vercel's App Router environment. The webhook awaits processing, with bounded market-data requests and Gemini fallback attempts.
+- **Speed over Bloat:** Uses `gemini-3.8-flash with gemini-3-flash-preview fallback` because intelligence delivery on mobile messaging needs to be near-instantaneous.
 - **Secure by Default:** Utilizes a custom `CRON_SECRET` to secure scheduled tasks and locks telemetry down to specific authorized `TELEGRAM_CHAT_ID`s.
 
 ---
@@ -61,3 +61,13 @@ graph TD
 2. Create `.env.local` file with your environment variables.
 3. Set Webhook: `curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://YOUR_DOMAIN/api/telegram"`
 4. Run locally: `npm run dev`
+
+## Recovery and configuration
+
+Production runs on Vercel at https://tejas-gemini-bot.vercel.app. Local `.env.local` changes do not update Vercel automatically. Set `TELEGRAM_BOT_TOKEN` and `GEMINI_API_KEY` as sensitive production environment variables and redeploy. Never commit credential files or private keys.
+
+Both chat and daily briefs use the shared Gemini client. Defaults are `GEMINI_MODEL=gemini-3.8-flash` and `GEMINI_FALLBACK_MODEL=gemini-3-flash-preview`; these can be overridden in the deployment environment. The defaults have free API token tiers in the Google pricing documentation checked on 2026-10-14. Account quotas and billing settings still apply. Authentication errors stop immediately; unavailable models, quota errors, timeouts, and incomplete answers can use the fallback. No Google Search grounding is requested.
+
+Quotes come from Yahoo Finance and can be delayed or from a closed market. Daily changes use the previous session close, gold conversion uses the fetched USD/INR rate, and missing figures are not estimated.
+
+Verify with `npm test`, `npx tsc --noEmit`, `npm run lint`, and `npm run build`. Production verification should include a Telegram reply and a daily brief. Diagnostic endpoints require `Authorization: Bearer <CRON_SECRET>`; do not put the secret in URLs.

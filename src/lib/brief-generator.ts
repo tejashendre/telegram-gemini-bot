@@ -1,4 +1,4 @@
-import { fetchWithRetry } from "./gemini";
+import { generateGeminiText } from "./gemini";
 
 // Real-time market symbols (Yahoo Finance v8 API)
 export const SYMBOLS = {
@@ -49,6 +49,8 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=7d`;
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
       headers: {
         "User-Agent": "Mozilla/5.0",
         "Cache-Control": "no-cache",
@@ -63,6 +65,7 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
           meta?: {
             regularMarketPrice?: number;
             chartPreviousClose?: number;
+            previousClose?: number;
             regularMarketTime?: number;
             shortName?: string;
             symbol?: string;
@@ -79,14 +82,14 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
     const chartResult = json.chart?.result?.[0];
     const meta = chartResult?.meta;
     const price = meta?.regularMarketPrice ?? null;
-    const prevClose = meta?.chartPreviousClose ?? null;
+    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
+    const prevClose = meta?.previousClose ?? rawCloses.at(-2) ?? null;
     const marketTime = meta?.regularMarketTime ?? null;
     const name = meta?.shortName || symbol;
 
     const change = (price !== null && prevClose !== null) ? price - prevClose : null;
     const changePercent = (price !== null && prevClose !== null) ? (change! / prevClose) * 100 : null;
 
-    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
     const validPrices = rawCloses.filter((p): p is number => typeof p === "number" && p !== null);
     
     if (price !== null && (validPrices.length === 0 || validPrices[validPrices.length - 1] !== price)) {
@@ -132,17 +135,18 @@ export async function fetchLiveQuote(symbol: string): Promise<MarketData> {
   }
 }
 
-export function convertGoldToINRPerGram(goldPriceUSD: number): number {
-  return (goldPriceUSD / 31.1035) * 83;
+export function convertGoldToINRPerGram(goldPriceUSD: number, usdInr: number): number {
+  return (goldPriceUSD / 31.1035) * usdInr;
 }
 
-export function formatMarketData(data: MarketData): string {
+export function formatMarketData(data: MarketData, usdInr?: number | null): string {
   let priceStr = "N/A";
   
   if (data.price !== null) {
     if (data.symbol === SYMBOLS.GOLD) {
-      priceStr = `$${data.price.toFixed(2)}/oz (≈₹${convertGoldToINRPerGram(data.price).toFixed(2)}/gram)`;
-    } else if (data.symbol === SYMBOLS.USDINR) {
+      priceStr = `$${data.price.toFixed(2)}/oz`;
+      if (usdInr) priceStr += ` (≈₹${convertGoldToINRPerGram(data.price, usdInr).toFixed(2)}/gram, indicative)`;
+    } else if (data.symbol === SYMBOLS.USDINR || data.symbol === SYMBOLS.NIFTY) {
       priceStr = `₹${data.price.toFixed(2)}`;
     } else if (data.symbol === SYMBOLS.BTC || data.symbol === SYMBOLS.ETH) {
       priceStr = `$${data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -187,12 +191,12 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
   }
 
   const sp500GoldRatio = sp500.price / gold.price;
-  const goldINR = convertGoldToINRPerGram(gold.price);
-  const niftyGoldRatio = nifty.price !== null ? nifty.price / goldINR : null;
+  const goldINR = usdinr.price ? convertGoldToINRPerGram(gold.price, usdinr.price) : null;
+  const niftyGoldRatio = nifty.price !== null && goldINR ? nifty.price / goldINR : null;
 
   const marketSections = [
     formatMarketData(sp500),
-    formatMarketData(gold),
+    formatMarketData(gold, usdinr.price),
     formatMarketData(nifty),
   ].join("\n\n");
 
@@ -215,27 +219,9 @@ export async function generateMorningBrief(apiKey: string): Promise<{ message: s
 - USD/INR: ₹${usdinr.price !== null ? usdinr.price.toFixed(2) : "N/A"} (Prev Close: ${usdinr.prevClose?.toFixed(2)}, Change: ${usdinr.change?.toFixed(2)}, % Change: ${usdinr.changePercent?.toFixed(2)}%)
 `;
     
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-    const res = await fetchWithRetry(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Here is the comprehensive real-time financial market data:\n${dataSummary}\n\nProvide the required concise sentiment summary, trends, and risk assessment based on this data.`,
-              },
-            ],
-          },
-        ],
-        systemInstruction: {
-          parts: [
-            {
-              text: `You are a premium, ultra-concise Real-Time Financial Terminal. Current time: ${new Date().toISOString()}.
+    aiSummary = await generateGeminiText(
+      `Here is the latest available market data:\n${dataSummary}\nProvide concise sentiment, trends and risks. Never invent missing prices or current news.`,
+      `You are a premium, ultra-concise Real-Time Financial Terminal. Current time: ${new Date().toISOString()}.
 Your goal is to provide a highly informative, to-the-point, and data-driven market summary under 200 words total.
 Structure your analysis strictly into these three sections using clear line breaks:
 
@@ -253,43 +239,8 @@ Rules:
 - Strictly limit output to under 200 words. Focus purely on high-signal data.
 - Plain text only. Absolutely no markdown, no asterisks (* or **), no brackets.
 - Plan your response carefully so that it is fully completed and never cuts off mid-sentence.`,
-            },
-          ],
-        },
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      if (res.status === 429) {
-        throw new Error("API Rate Limit Exceeded");
-      }
-      throw new Error(`Gemini API error ${res.status}`);
-    }
-
-    const data = await res.json() as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{ text?: string }>;
-        };
-      }>;
-    };
-
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    aiSummary = content
-      .replace(/\*/g, "")
-      .replace(/_/g, " ")
-      .replace(/[\[\]]/g, "")
-      .replace(/`/g, "")
-      .replace(/\[[\d\s,]+\]/g, "")
-      .replace(/\[\^?\d+\]/g, "")
-      .split("\n")
-      .map((line) => line.replace(/[ \t]+/g, " ").trim())
-      .join("\n")
-      .trim();
+      apiKey
+    );
   } catch (err) {
     console.error("[brief-generator] AI summary failed:", err);
     const errMsg = err instanceof Error ? err.message : String(err);

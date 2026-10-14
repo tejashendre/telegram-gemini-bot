@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Bot } from "grammy";
 import { getSubscribedUsers } from "@/lib/user-storage";
 
@@ -7,11 +7,15 @@ export const dynamic = "force-dynamic";
 
 /**
  * Simple test: sends a quick message to all subscribed users.
- * No yahoo-finance2 dependency — pure Telegram send test.
+ * No yahoo-finance2 dependency - pure Telegram send test.
  *
  * Visit: https://your-app.vercel.app/api/test-send
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+        return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
         return NextResponse.json({ ok: false, error: "TELEGRAM_BOT_TOKEN not set" }, { status: 500 });

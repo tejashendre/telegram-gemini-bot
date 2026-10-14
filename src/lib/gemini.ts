@@ -1,4 +1,5 @@
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+export const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3-flash-preview";
 
 const SYSTEM_PROMPT = (date = new Date().toISOString()) => `You are a premium, highly skilled, and ultra-concise Financial Analyst. Current time: ${date}.
 Your goal is to provide a highly informative, to-the-point, and data-driven financial analysis under 250 words total based on the live market data provided.
@@ -16,12 +17,15 @@ SENTIMENT & RISKS
 - Provide 1-2 bullet points flagging key support/resistance levels or immediate market risks.
 
 Rules:
+- If live data is unavailable, say so. Never invent current prices, news, or trading levels.
+- Treat the supplied quote as the latest available quote, which may be delayed or from a closed market.
+- Use ASCII hyphens instead of Unicode em dashes.
 - Strictly limit output to under 250 words. Focus purely on high-signal facts.
 - Plain text only. Absolutely no markdown, no asterisks (* or **), no brackets.
 - Separate sections with a single blank line.
 - Always finish your thought completely. Plan your response carefully to never cut off mid-sentence.`;
 
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 4096;
 
 // Common natural words mapped to their Yahoo Finance tickers
 const TICKER_MAPPINGS: Record<string, string> = {
@@ -155,6 +159,8 @@ async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
     // Fetch last 7 days of daily prices to generate sparkline and capture meta
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=7d`;
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
       headers: {
         "User-Agent": "Mozilla/5.0",
         "Cache-Control": "no-cache",
@@ -167,6 +173,7 @@ async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
           meta?: {
             regularMarketPrice?: number;
             chartPreviousClose?: number;
+            previousClose?: number;
             fiftyTwoWeekHigh?: number;
             fiftyTwoWeekLow?: number;
             regularMarketDayHigh?: number;
@@ -191,12 +198,12 @@ async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
 
     const name = meta?.shortName || symbol;
     const currency = meta?.currency || "USD";
-    const prevClose = meta?.chartPreviousClose ?? null;
+    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
+    const prevClose = meta?.previousClose ?? rawCloses.at(-2) ?? null;
     const change = prevClose !== null ? price - prevClose : null;
     const changePercent = prevClose !== null ? (change! / prevClose) * 100 : null;
 
     // Extract historical close prices for sparkline
-    const rawCloses = chartResult?.indicators?.quote?.[0]?.close ?? [];
     const validPrices = rawCloses.filter((p): p is number => typeof p === "number" && p !== null);
     
     // Add current live price to the end if not already there
@@ -228,6 +235,63 @@ async function fetchLiveQuote(symbol: string): Promise<QuoteData | null> {
 }
 
 export type GeminiMessage = { role: "system" | "user" | "model"; content: string };
+
+/** Share authentication, bounded fallback and response validation across chat and briefs. */
+export async function generateGeminiText(
+  prompt: string,
+  systemPrompt: string,
+  apiKey: string
+): Promise<string> {
+  let failure = "AI is temporarily unavailable. Please try again shortly.";
+  for (const model of Array.from(new Set([GEMINI_MODEL, GEMINI_FALLBACK_MODEL]))) {
+    let response: Response;
+    try {
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        signal: AbortSignal.timeout(18000),
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: {
+            temperature: 1,
+            maxOutputTokens: MAX_TOKENS,
+            ...(model.startsWith("gemini-3") ? {
+              thinkingConfig: { thinkingLevel: model === "gemini-3.8-flash" ? "low" : "minimal" },
+            } : {}),
+          },
+        }),
+      });
+    } catch {
+      console.warn(`[Gemini API] ${model} timed out or could not connect; trying fallback.`);
+      continue;
+    }
+    if (!response.ok) {
+      if ([400, 401, 403].includes(response.status)) {
+        throw new Error("Gemini authentication failed or request was rejected. Check server configuration.");
+      }
+      if (response.status !== 404 && response.status !== 429 && response.status < 500) {
+        throw new Error(`Gemini request failed (${response.status}).`);
+      }
+      failure = response.status === 429
+        ? "AI rate limit exceeded. Please wait a minute before querying again."
+        : "AI is temporarily unavailable. Please try again shortly.";
+      console.warn(`[Gemini API] ${model} returned ${response.status}; trying fallback.`);
+      continue;
+    }
+    const data = await response.json() as {
+      candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
+    };
+    const candidate = data.candidates?.[0];
+    const text = candidate?.content?.parts?.filter(part => !part.thought).map(part => part.text || "").join("").trim();
+    if (!text || (candidate?.finishReason && candidate.finishReason !== "STOP")) {
+      failure = "AI returned an incomplete or blocked response. Please try again.";
+      continue;
+    }
+    return cleanForTelegram(text).replace(/\u2014/g, "-");
+  }
+  throw new Error(failure);
+}
 
 export async function fetchWithRetry(
   url: string,
@@ -304,63 +368,5 @@ Use this live market data as the absolute, single source of truth for current pr
     }
   }
 
-  const url = `${GEMINI_API_URL}?key=${apiKey}`;
-  const response = await fetchWithRetry(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: userMessage + liveDataPrompt,
-            },
-          ],
-        },
-      ],
-      systemInstruction: {
-        parts: [
-          {
-            text: SYSTEM_PROMPT(),
-          },
-        ],
-      },
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: MAX_TOKENS,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    if (response.status === 429) {
-      throw new Error("AI rate limit exceeded. Please wait a minute before querying again.");
-    }
-    throw new Error(`Gemini API error ${response.status}: ${errText}`);
-  }
-
-  const data = (await response.json()) as {
-    candidates?: Array<{
-      content?: {
-        parts?: Array<{ text?: string }>;
-      };
-      finishReason?: string;
-    }>;
-    error?: { message?: string };
-  };
-
-  if (data.error?.message) {
-    throw new Error(data.error.message);
-  }
-
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (typeof content !== "string") {
-    throw new Error("Unexpected Gemini response shape");
-  }
-
-  return cleanForTelegram(content.trim());
+  return generateGeminiText(userMessage + liveDataPrompt, SYSTEM_PROMPT(), apiKey);
 }

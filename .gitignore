@@ -17,6 +17,10 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.sqlite
+*.sqlite3
+*.db
 
 # debug
 npm-debug.log*
@@ -25,7 +29,8 @@ yarn-error.log*
 
 # env
 .env
-.env*.local
+.env.*
+!.env.local.example
 
 # vercel
 .vercel
@@ -33,3 +38,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
