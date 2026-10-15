@@ -30,4 +30,4 @@
 - [x] Prepare verified V4 paired films, posters, public provenance and hashes; preserve earlier files in Git and film workspace.
 - [x] Push scoped film/media changes and verify remote blobs: 474b94b, both films and posters match.
 - [x] Obtain both GitHub user-attachment URLs through the refreshed signed-in Chrome connection; preview dimensions/durations match both formats.
-- [ ] Push attachment-based README and verify both inline players on GitHub.
+- [x] Push attachment-based README and verify both inline players on GitHub: 68bc4fa; 1920x1080 and 1080x1920, each 20 seconds, both loaded and played in signed-in Chrome. Public tracked download copies are retained.
