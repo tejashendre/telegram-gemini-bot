@@ -49,3 +49,8 @@ This supersedes earlier one-shot-as-waiver assumptions. Export metadata checks a
 
 ## Approved V4 film publication intake
 Owner has completely approved the V4 film and explicitly requests publishing. Work from the final verified V4 exports; replace paired media/posters and README film section with attachment-based inline players in the FocusLock/Dictate Local layout. Preserve earlier exports in Git/local history. No bot runtime changes or secret staging. Exact files/hashes and final approval are recorded in the V4 film workspace. Need both remote tracked copies and both rendered README players verified before claiming publication complete.
+
+## V4 remote media and attachment URLs
+Approved V4 media commit 474b94b is on origin/main. GitHub API confirms both MP4 blobs and sizes match local: landscape a3b08db6e1897dd47c3faba3662a7d98c8fd6ee4 / 8669687 bytes; portrait 86608990cbb30df975280caf86b2fe6765418e6e / 9124213 bytes. Both poster blobs also match.
+
+Chrome restarted/reconnected after its file-access restriction. The refreshed connection successfully uploaded both exact approved files once to GitHub attachments through the signed-in issue editor. No issue was created. Separating the bare URLs with blank paragraphs makes GitHub render video players. Preview metadata confirms landscape 1920x1080/20s and portrait 1080x1920/20s, both ready. README now places the landscape attachment above the On a phone vertical disclosure, with tracked media fallback links. Next: push the README and verify both players on the rendered repository page.

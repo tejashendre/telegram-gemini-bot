@@ -6,14 +6,14 @@ A Next.js 14 (App Router) Telegram bot using the Gemini API (gemini-3.8-flash wi
 
 **Project films:** two independently composed 20-second cuts, with music and soft action chimes.
 
-[Watch or download the landscape film](media/telegram-gemini-bot-demo-16x9.mp4)
+https://github.com/user-attachments/assets/6b17a472-561e-4772-b114-5cdc82ba3dac
 
 <sub>Landscape (16:9). [Download the film](media/telegram-gemini-bot-demo-16x9.mp4).</sub>
 
 <details>
 <summary><b>On a phone?</b> Watch the vertical cut (20 seconds)</summary>
 
-[Watch or download the vertical film](media/telegram-gemini-bot-demo-9x16.mp4)
+https://github.com/user-attachments/assets/2fd345ac-bec1-46f8-be3d-8386d562a681
 
 <sub>Independently composed for 9:16. [Download the film](media/telegram-gemini-bot-demo-9x16.mp4).</sub>
 

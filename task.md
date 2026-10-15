@@ -28,5 +28,6 @@
 ## Owner-approved V4 publication
 - [x] Owner completely approves both final films and authorizes publication.
 - [x] Prepare verified V4 paired films, posters, public provenance and hashes; preserve earlier files in Git and film workspace.
-- [ ] Push scoped film/media changes and verify remote blobs.
-- [ ] Obtain GitHub user-attachment URLs and verify both README inline players. Chrome still rejects automated file selection; manual native selection is the remaining browser step.
+- [x] Push scoped film/media changes and verify remote blobs: 474b94b, both films and posters match.
+- [x] Obtain both GitHub user-attachment URLs through the refreshed signed-in Chrome connection; preview dimensions/durations match both formats.
+- [ ] Push attachment-based README and verify both inline players on GitHub.
