@@ -24,3 +24,9 @@
 - [x] Prepare both tracked repository MP4s, posters and source/rights provenance.
 - [x] Push and verify matching remote MP4s: afa5057, both GitHub blob hashes and sizes match local files.
 - [ ] Upload GitHub attachments and verify both inline README players. Owner approved/enabled local-file access; Chrome upload tool still reports it disabled after refresh and reconnect. Manual attachment selection is the next action.
+
+## Owner-approved V4 publication
+- [x] Owner completely approves both final films and authorizes publication.
+- [x] Prepare verified V4 paired films, posters, public provenance and hashes; preserve earlier files in Git and film workspace.
+- [ ] Push scoped film/media changes and verify remote blobs.
+- [ ] Obtain GitHub user-attachment URLs and verify both README inline players. Chrome still rejects automated file selection; manual native selection is the remaining browser step.

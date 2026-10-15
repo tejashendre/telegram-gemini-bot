@@ -1,0 +1,12 @@
+[
+  {
+    "prompt": "NVDA",
+    "text": "OVERVIEW & PERFORMANCE\nNVIDIA Corporation (NVDA) closed down 3.16% at $221.30, shedding $7.22 on heavy trading volume of 117.76M shares after hitting an intraday low of $219.64.\n\nTREND & OUTLOOK\n- The 7-day sparkline shows sharp deceleration from recent weekly highs, with the stock breaking downward toward the lower end of its short-term consolidation range.\n- Current pricing sits roughly 9% below the 52-week high of $243.37, while maintaining a 34.7% cushion above the 52-week low of $164.27.\n- Intraday action failed to retest the previous close of $228.52, confirming strong selling pressure and lack of dip-buying momentum above $226.00.\n\nSENTIMENT & RISKS\n- Immediate technical support sits at the session low of $219.64, with a breakdown exposing lower psychological support toward $210.00.\n- Resistance is firmly established at the intraday high of $226.00, followed by previous close resistance at $228.52.",
+    "source": "Actual bot queryGemini runtime"
+  },
+  {
+    "prompt": "Gold",
+    "text": "OVERVIEW & PERFORMANCE\nGold Dec 26 trades at $4157.10 USD, advancing $49.20 (+1.20%) on a daily volume of 45,029 contracts within an intraday range of $4120.90 to $4183.30.\n\nTREND & OUTLOOK\n- The 7-day sparkline shows price stabilization following an earlier peak, with current levels recovering moderately from recent mid-week lows.\n- The contract trades near the median of its daily span but remains well below its 52-week high of $5586.20, while retaining a solid buffer above its 52-week low of $3901.30.\n- Sustained momentum above the previous close of $4107.90 signals short-term buying interest, though upside requires a clean breakout beyond the intraday peak of $4183.30.\n\nSENTIMENT & RISKS\n- Immediate technical resistance sits at the session high of $4183.30, while primary intraday support rests at $4120.90 followed by the $4100.00 psychological threshold.\n- The dominant risk factor is a failure to hold gains above $4120.00, which would expose the contract to renewed tests of the multi-month support base near $3901.30.",
+    "source": "Actual bot queryGemini runtime"
+  }
+]

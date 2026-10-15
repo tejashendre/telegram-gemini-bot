@@ -4,20 +4,22 @@
 
 A Next.js 14 (App Router) Telegram bot using the Gemini API (gemini-3.8-flash with gemini-3-flash-preview fallback model) for real-time financial data synthesis and market sentiment delivery. Uses webhooks and interim Telegram messages for Vercel serverless.
 
-**Project films:** independently composed 16:9 and 9:16 versions, 20 seconds each, with music and action sounds.
-
-**Landscape (16:9)**
+**Project films:** two independently composed 20-second cuts, with music and soft action chimes.
 
 [Watch or download the landscape film](media/telegram-gemini-bot-demo-16x9.mp4)
 
+<sub>Landscape (16:9). [Download the film](media/telegram-gemini-bot-demo-16x9.mp4).</sub>
+
 <details>
-<summary><b>On a phone?</b> Watch the independently composed vertical film (9:16)</summary>
+<summary><b>On a phone?</b> Watch the vertical cut (20 seconds)</summary>
 
 [Watch or download the vertical film](media/telegram-gemini-bot-demo-9x16.mp4)
 
+<sub>Independently composed for 9:16. [Download the film](media/telegram-gemini-bot-demo-9x16.mp4).</sub>
+
 </details>
 
-<sub>Staged mobile interface with genuine recorded bot output from 14 October 2026. Processing is shortened. Music: Deep Techno Ambience by Alejandro Magana (Mixkit), with original action cues. [Film provenance and verification](media/README.md).</sub>
+<sub>Genuine bot output in a staged phone interface. Music: Deep Techno Ambience by Alejandro Magana (Mixkit). [Film provenance](media/README.md).</sub>
 
 **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
